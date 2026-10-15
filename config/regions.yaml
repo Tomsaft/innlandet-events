@@ -1,0 +1,8 @@
+regions:
+  hamar:
+    label: "Hamar"
+    sources: [hamar_kommune]
+  innlandet:
+    label: "Innlandet"
+    includes: [hamar]     # add lillehammer, gjovik, ... here later
+    sources: []

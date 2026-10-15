@@ -1,0 +1,10 @@
+llm:
+  provider: ollama          # ollama | mock (anthropic later)
+  model: "qwen2.5:3b"
+  temperature: 0.2
+budget:
+  max_turns: 40
+  max_tokens: 30000
+  max_seconds: 600
+audience: students
+languages: [en, no]

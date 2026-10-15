@@ -3,11 +3,18 @@ from dataclasses import dataclass, field
 
 @dataclass
 class RawItem:
-    """Unprocessed text from a source, before the LLM touches it."""
+    """Fields extracted from a source page, before the LLM touches it."""
     source_id: str
     url: str
-    text: str
     fetched_at: str
+    title: str
+    start: str                  # ISO 8601 with offset, from JSON-LD
+    end: str | None = None
+    venue: str = ""
+    address: str = ""
+    description: str = ""       # emails/phones redacted
+    schedule: list[str] = field(default_factory=list)
+    language: str = "no"
 
 
 @dataclass

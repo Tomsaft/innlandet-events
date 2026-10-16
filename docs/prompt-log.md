@@ -1,5 +1,6 @@
+# Test
 # Prompt log
-
+# 
 ## 2026-10-15: Setup and task 001
 
 - **Code source:** `harness/budget.py` is copied unchanged from the course

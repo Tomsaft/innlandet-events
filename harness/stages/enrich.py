@@ -2,19 +2,23 @@ import json
 import re
 from datetime import datetime, timezone
 
+import requests
+
 from harness.models import CATEGORIES, Event, RawItem
 
 CANCELLED = re.compile(r"\b(avlyst|avlyses|cancelled|canceled)\b", re.I)
 
 SYSTEM = f"""You help students (Norwegian and international) find events in Hamar, Norway.
-You get one event as text. Reply with ONLY a JSON object with exactly these keys:
+You get one event as text. Reply with ONLY a JSON object with exactly these four keys:
 - "category": one of {CATEGORIES}
-- "summary_en": 1-2 plain English sentences describing the event
-- "summary_no": the same in Norwegian (bokmål)
+- "summary_en": ONE English sentence, max 25 words
+- "summary_no": the same sentence in Norwegian (bokmål), max 25 words
 - "student_fit": integer 0-3 (0 = not relevant for students, 3 = very relevant)
 Rules: use only facts from the text. Do not invent dates, times, prices or names.
-Do not include phone numbers or email addresses."""
-
+Do not copy the description. Do not include URLs.
+Do not include phone numbers or email addresses.
+Example reply:
+{{"category": "concert", "summary_en": "A live concert at the venue.", "summary_no": "En konsert på stedet.", "student_fit": 2}}"""
 
 def build_messages(item: RawItem) -> list[dict]:
     user = (
@@ -38,8 +42,15 @@ def parse_reply(text: str) -> dict:
     for k in ("summary_en", "summary_no"):
         if not isinstance(d.get(k), str) or not d[k].strip():
             raise ValueError(f"missing {k}")
+        if len(d[k].split()) > 45:
+            raise ValueError(f"{k} too long ({len(d[k].split())} words)")
+        if "http" in d[k] or "www." in d[k]:
+            raise ValueError(f"URL in {k}")
     fit = d.get("student_fit")
-    if isinstance(fit, bool) or not isinstance(fit, int) or not 0 <= fit <= 3:
+    if fit is None:
+        d["student_fit"] = 0          # missing: safe default, counted by caller
+        d["fit_missing"] = True
+    elif isinstance(fit, bool) or not isinstance(fit, int) or not 0 <= fit <= 3:
         raise ValueError(f"bad student_fit: {fit!r}")
     return d
 
@@ -50,7 +61,7 @@ def is_past(item: RawItem, now: datetime) -> bool:
 
 def enrich(items, client, model, temperature, budget, limit=None, now=None):
     now = now or datetime.now(timezone.utc)
-    events, stats = [], {"past": 0, "failed": 0}
+    events, stats = [], {"past": 0, "failed": 0, "fit_missing": 0}
     for item in items:
         if limit is not None and len(events) >= limit:
             budget.stop("limit")
@@ -58,22 +69,30 @@ def enrich(items, client, model, temperature, budget, limit=None, now=None):
         if is_past(item, now):
             stats["past"] += 1
             continue
+        name = item.url.rsplit("/", 1)[1]
         reply = None
         for attempt in range(2):                      # one retry
             if budget.exhausted():
                 break
-            resp = client.chat(model, build_messages(item), temperature, json_mode=True)
+            try:
+                resp = client.chat(model, build_messages(item), temperature, json_mode=True)
+            except (requests.exceptions.Timeout, requests.exceptions.HTTPError) as e:
+                budget.record(turns=1)                # a failed call still costs a turn
+                print(f"warn: {type(e).__name__} (attempt {attempt + 1}) for {name}")
+                continue
             budget.record(turns=1, tokens=resp.tokens)
             try:
                 reply = parse_reply(resp.text)
                 break
             except ValueError as e:
-                print(f"warn: attempt {attempt + 1} failed for {item.url.rsplit('/', 1)[1]}: {e}")
+                print(f"warn: attempt {attempt + 1} failed for {name}: {e}")
         if budget.stop_reason in ("max_turns", "max_tokens", "max_seconds") and reply is None:
             break
         if reply is None:
             stats["failed"] += 1
             continue
+        if reply.get("fit_missing"):
+            stats["fit_missing"] += 1
         events.append(Event(
             title=item.title, start=item.start, end=item.end, venue=item.venue,
             source_id=item.source_id, source_url=item.url, language=item.language,

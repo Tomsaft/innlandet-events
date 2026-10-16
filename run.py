@@ -1,19 +1,56 @@
 import argparse
+import json
+from dataclasses import asdict
+from pathlib import Path
 
+import yaml
+
+from harness.budget import Budget
+from harness.llm import make_client
 from harness.sources.hamar_kommune import HamarKommuneSource
+from harness.stages.enrich import enrich
 
 
-def main():
-    p = argparse.ArgumentParser()
-    p.add_argument("command", choices=["probe"])
-    p.add_argument("--max-pages", type=int, default=30)
-    p.add_argument("--offline", action="store_true", help="read fixtures instead of fetching")
-    args = p.parse_args()
-
+def cmd_probe(args):
     items = HamarKommuneSource(max_pages=args.max_pages).fetch(offline=args.offline)
     print(f"{len(items)} items")
     for it in items[:5]:
         print(f"- {it.start} | {it.title} | {it.venue}")
+
+
+def cmd_enrich(args):
+    cfg = yaml.safe_load(Path(args.config).read_text(encoding="utf-8"))
+    llm = cfg["llm"]
+    items = HamarKommuneSource().fetch(offline=True)
+    budget = Budget(**cfg["budget"])
+    client = make_client(llm["provider"], mock=args.mock)
+    events, stats = enrich(items, client, llm["model"], llm["temperature"],
+                           budget, limit=args.limit)
+
+    out = Path("out")
+    out.mkdir(exist_ok=True)
+    (out / "events.json").write_text(
+        json.dumps([asdict(e) for e in events], ensure_ascii=False, indent=2),
+        encoding="utf-8")
+    (out / "run.json").write_text(json.dumps({
+        "model": "mock" if args.mock else llm["model"],
+        "temperature": llm["temperature"],
+        "budget": budget.summary(),
+        "stats": {**stats, "events": len(events)},
+    }, ensure_ascii=False, indent=2), encoding="utf-8")
+    print(f"{len(events)} events, {stats}, stopped: {budget.stop_reason}")
+
+
+def main():
+    p = argparse.ArgumentParser()
+    p.add_argument("command", choices=["probe", "enrich"])
+    p.add_argument("--max-pages", type=int, default=30)
+    p.add_argument("--offline", action="store_true")
+    p.add_argument("--mock", action="store_true")
+    p.add_argument("--limit", type=int, default=None, help="max events to enrich")
+    p.add_argument("--config", default="config/pipeline.yaml")
+    args = p.parse_args()
+    {"probe": cmd_probe, "enrich": cmd_enrich}[args.command](args)
 
 
 if __name__ == "__main__":

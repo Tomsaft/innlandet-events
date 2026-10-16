@@ -17,5 +17,5 @@ class ChatResponse:
 class LLMClient(ABC):
     @abstractmethod
     def chat(self, model: str, messages: list[dict],
-             temperature: float = 0.2) -> ChatResponse:
+             temperature: float = 0.2, json_mode: bool = False) -> ChatResponse:
         ...

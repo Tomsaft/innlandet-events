@@ -26,3 +26,21 @@
 - **Open question for lecturers:** reuse terms for hamar.kommune.no
   calendar data are not checked; the site blocks AI crawlers (ClaudeBot)
   in robots.txt.
+- **Failure observed (task 002):** qwen2.5:3b ignored "1-2 sentences" and
+  returned a ~150-word summary for musikkbingo-1; the 400-token cap cut the
+  JSON mid-string. Fix: prompt tightened + 45-word cap and URL check in
+  parse_reply. 0 warnings on the same 5 events afterwards.
+- **Failure observed:** model omits "student_fit" (3 times on 2 pages in one
+  full run, even with an example in the prompt); one event lost (failed: 1).
+  Fix: missing student_fit defaults to 0 and is counted (fit_missing).
+  Trade-off: a lost event vs. an unreliable field.
+- **Failure observed:** HTTP 500 from Ollama crashed the whole run and lost
+  all work. Fix: HTTPError and Timeout are caught per call and counted
+  against the turn budget.
+- **Gap found:** eval/check_enrich.py passed an old out/events.json after a
+  crashed run (false PASS). Mitigation: delete out/ before each run.
+- **Gap found:** model labelled "Åpent skaperverksted" as food_drink. Valid
+  format, wrong content; the check cannot catch this.
+- **Gap found:** student_fit is almost constant (24 of 28 events = 3).
+  The field passes validation but carries no information. Format checks
+  cannot detect this; a distribution check could.

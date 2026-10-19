@@ -5,6 +5,7 @@ from pathlib import Path
 
 import yaml
 
+from harness.archive import keep, run_stamp
 from harness.budget import Budget
 from harness.llm import make_client
 from harness.sources.hamar_kommune import HamarKommuneSource
@@ -12,6 +13,11 @@ from harness.stages.enrich import enrich
 
 
 def cmd_probe(args):
+    if not args.offline:
+        moved = keep(["fixtures/hamar_kommune.json", *Path("fixtures/raw").glob("*.html")],
+                     run_stamp("probe"), move=False)
+        if moved:
+            print(f"archived {len(moved)} old fixture files to archive/{moved[0].parts[1]}")
     items = HamarKommuneSource(max_pages=args.max_pages).fetch(offline=args.offline)
     print(f"{len(items)} items")
     for it in items[:5]:
@@ -22,6 +28,9 @@ def cmd_enrich(args):
     cfg = yaml.safe_load(Path(args.config).read_text(encoding="utf-8"))
     llm = cfg["llm"]
     items = HamarKommuneSource().fetch(offline=True)
+    moved = keep(["out/events.json", "out/run.json"], run_stamp("enrich"))
+    if moved:
+        print(f"archived previous output to archive/{moved[0].parts[1]}")
     budget = Budget(**cfg["budget"])
     client = make_client(llm["provider"], mock=args.mock)
     events, stats = enrich(items, client, llm["model"], llm["temperature"],

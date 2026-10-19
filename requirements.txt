@@ -1,2 +1,5 @@
-requests
-PyYAML
+# Direct dependencies only (pip resolves the rest). Pinned to the versions
+# the project is tested with on Python 3.14. CLAUDE.md: no other packages.
+beautifulsoup4==4.15.0
+PyYAML==6.0.3
+requests==2.34.2

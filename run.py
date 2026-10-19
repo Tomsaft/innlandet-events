@@ -1,5 +1,7 @@
 import argparse
 import json
+import subprocess
+import sys
 from dataclasses import asdict
 from pathlib import Path
 
@@ -50,16 +52,40 @@ def cmd_enrich(args):
     print(f"{len(events)} events, {stats}, stopped: {budget.stop_reason}")
 
 
+# One check per implemented stage, in pipeline order. Add eval/check_dedupe.py
+# here when the dedupe stage (task 003) is wired into cmd_all.
+CHECKS = ["eval/check_probe.py", "eval/check_enrich.py"]
+
+
+def cmd_all(args):
+    """Whole chain from one command: probe -> enrich -> every stage check."""
+    print("== probe")
+    cmd_probe(args)
+    print("== enrich")
+    cmd_enrich(args)
+    failed = []
+    for check in CHECKS:
+        res = subprocess.run([sys.executable, check], capture_output=True,
+                             text=True, encoding="utf-8")
+        ok = res.returncode == 0
+        print(f"== {check}: {'PASS' if ok else 'FAIL'}")
+        if not ok:
+            print((res.stdout + res.stderr).strip().splitlines()[-1])
+            failed.append(check)
+    print(f"{len(CHECKS) - len(failed)}/{len(CHECKS)} checks passed")
+    sys.exit(1 if failed else 0)
+
+
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument("command", choices=["probe", "enrich"])
+    p.add_argument("command", choices=["probe", "enrich", "all"])
     p.add_argument("--max-pages", type=int, default=30)
     p.add_argument("--offline", action="store_true")
     p.add_argument("--mock", action="store_true")
     p.add_argument("--limit", type=int, default=None, help="max events to enrich")
     p.add_argument("--config", default="config/pipeline.yaml")
     args = p.parse_args()
-    {"probe": cmd_probe, "enrich": cmd_enrich}[args.command](args)
+    {"probe": cmd_probe, "enrich": cmd_enrich, "all": cmd_all}[args.command](args)
 
 
 if __name__ == "__main__":

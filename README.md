@@ -53,14 +53,26 @@ pip install -r requirements.txt
 
 ## Quick start: reproduce the run (no network, no model)
 
+One command runs the whole chain (probe → enrich → every stage check) and
+exits 0 only if all checks pass:
+
+```powershell
+python run.py all --offline --mock
+```
+
+Expected: `25 events, {'past': ..., 'failed': 0, 'fit_missing': 0}, stopped: all_items_done`,
+then `PASS` for each check and `2/2 checks passed`.
+
+The same steps one at a time:
+
 ```powershell
 python run.py enrich --mock
 python eval/check_probe.py
 python eval/check_enrich.py
 ```
 
-Expected: `25 events, {'past': ..., 'failed': 0, 'fit_missing': 0}, stopped: all_items_done`
-and `PASS` from both checks. The exact `past` count depends on today's date,
+Without `--offline`, `all` probes the live source first (needs
+`CRAWLER_CONTACT`); without `--mock` it uses the real model. The exact `past` count depends on today's date,
 because events that have already ended are filtered out.
 
 ## Real model run
@@ -101,9 +113,9 @@ committed fixtures without any network access.
 
 | Flag | Applies to | Effect |
 |---|---|---|
-| `--offline` | probe | Read `fixtures/` instead of fetching |
+| `--offline` | probe, all | Read `fixtures/` instead of fetching |
 | `--max-pages N` | probe | Max event pages to fetch (default 30) |
-| `--mock` | enrich | Use the mock LLM client (fixed replies) |
+| `--mock` | enrich, all | Use the mock LLM client (fixed replies) |
 | `--limit N` | enrich | Enrich at most N events |
 | `--config PATH` | enrich | Pipeline config (default `config/pipeline.yaml`) |
 
@@ -124,7 +136,7 @@ the submission.
 ## Repository layout
 
 ```
-run.py                  CLI entry point (probe, enrich)
+run.py                  CLI entry point (probe, enrich, all)
 config/pipeline.yaml    model, temperature, budget limits, audience, languages
 config/regions.yaml     regions and their sources (Hamar now, more towns later)
 harness/sources/        one adapter per calendar (hamar_kommune.py, sitemap.py)

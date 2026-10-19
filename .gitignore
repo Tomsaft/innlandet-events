@@ -6,3 +6,5 @@ __pycache__/
 .idea/
 *.pyc
 archive/
+# course material, not ours to publish
+docs/*.pdf

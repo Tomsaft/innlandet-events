@@ -14,4 +14,7 @@ them with an LLM, and produces an EN/NO digest aimed at students.
 - No personal data: no performer, contact or organiser-person fields.
 - Public sources only; respect robots.txt and each source's terms.
 - Always open files with encoding="utf-8".
+- Never overwrite earlier outputs: before a stage writes a file, pass the old
+  one to `harness.archive.keep` (move outputs, copy inputs). Never delete
+  `archive/`.
 - stdlib + requests + PyYAML + beautifulsoup4 only.

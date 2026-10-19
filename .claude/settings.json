@@ -1,7 +1,19 @@
 {
   "permissions": {
-    "allow": ["Bash(python *)", "Bash(git diff *)"],
-    "ask": ["Bash(git push *)"],
-    "deny": ["Read(./.env)", "Read(./.env.local)", "Edit(/eval/**)"]
+    "allow": [
+      "Bash(python *)", "Bash(git diff *)",
+      "Bash(gh pr view *)", "Bash(gh pr list *)", "Bash(gh pr status *)",
+      "Bash(gh pr diff *)", "Bash(gh pr checks *)"
+    ],
+    "ask": [
+      "Bash(git push *)",
+      "Bash(gh pr create *)", "Bash(gh pr edit *)", "Bash(gh pr comment *)"
+    ],
+    "deny": [
+      "Read(./.env)", "Read(./.env.local)", "Edit(/eval/**)",
+      "Bash(gh pr merge *)", "Bash(gh pr review *)",
+      "Bash(gh repo edit *)", "Bash(gh repo delete *)",
+      "Bash(gh api *)", "Bash(gh auth *)", "Bash(gh secret *)"
+    ]
   }
 }

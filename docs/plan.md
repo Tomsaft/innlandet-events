@@ -3,7 +3,8 @@
 **Status: planned, not implemented.** Compulsory 2 delivers the events path
 only (probe → enrich → dedupe). Everything below is future work for the exam,
 to be discussed further and built after Compulsory 2. Source: discussion
-between the two group members and lecturer feedback, 2026-10-25.
+between the two group members and lecturer feedback (meetings 5 and 6,
+2026-10-20; see docs/meetings/).
 
 ## Idea
 One place to see what is happening in Innlandet, and optionally how to get

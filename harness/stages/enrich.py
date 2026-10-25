@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 
 import requests
 
-from harness.models import CATEGORIES, STUDENT_FIT, Event, RawItem
+from harness.models import CATEGORIES, STUDENT_FIT_BY_CATEGORY, Event, RawItem
 
 CANCELLED = re.compile(r"\b(avlyst|avlyses|cancelled|canceled)\b", re.I)
 
@@ -90,7 +90,8 @@ def enrich(items, client, model, temperature, budget, limit=None, now=None):
             description=item.description,
             cancelled=bool(CANCELLED.search(item.title)),
             category=reply["category"], summary_en=reply["summary_en"].strip(),
-            summary_no=reply["summary_no"].strip(), student_fit=STUDENT_FIT[reply["category"]],
+            summary_no=reply["summary_no"].strip(),
+            student_fit=STUDENT_FIT_BY_CATEGORY[reply["category"]],
         ))
     if budget.stop_reason is None:
         budget.stop("all_items_done")

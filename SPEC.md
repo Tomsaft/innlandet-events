@@ -16,7 +16,7 @@ than importing them, and it compares output against the committed fixture.
 |---|---|---|
 | Probe | `python run.py probe` (or `--offline`) | `python eval/check_probe.py` |
 | Enrich | `python run.py enrich [--mock]` | `python eval/check_enrich.py` |
-| Dedupe (task 003) | in progress | `python eval/check_dedupe.py` |
+| Dedupe | `python run.py dedupe` | `python eval/check_dedupe.py` |
 
 What the checks verify:
 

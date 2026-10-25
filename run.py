@@ -11,6 +11,7 @@ from harness.archive import keep, run_stamp
 from harness.budget import Budget
 from harness.llm import make_client
 from harness.sources.hamar_kommune import HamarKommuneSource
+from harness.stages.dedupe import dedupe
 from harness.stages.enrich import enrich
 
 
@@ -52,17 +53,32 @@ def cmd_enrich(args):
     print(f"{len(events)} events, {stats}, stopped: {budget.stop_reason}")
 
 
-# One check per implemented stage, in pipeline order. Add eval/check_dedupe.py
-# here when the dedupe stage (task 003) is wired into cmd_all.
-CHECKS = ["eval/check_probe.py", "eval/check_enrich.py"]
+def cmd_dedupe(args):
+    events = json.loads(Path("out/events.json").read_text(encoding="utf-8"))
+    moved = keep(["out/events_deduped.json", "out/dedupe.json"], run_stamp("dedupe"))
+    if moved:
+        print(f"archived previous output to archive/{moved[0].parts[1]}")
+    kept, report = dedupe(events)
+    out = Path("out")
+    (out / "events_deduped.json").write_text(
+        json.dumps(kept, ensure_ascii=False, indent=2), encoding="utf-8")
+    (out / "dedupe.json").write_text(
+        json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+    print(f"{report['input']} in, {report['output']} out, {report['removed']} removed")
+
+
+# One check per implemented stage, in pipeline order.
+CHECKS = ["eval/check_probe.py", "eval/check_enrich.py", "eval/check_dedupe.py"]
 
 
 def cmd_all(args):
-    """Whole chain from one command: probe -> enrich -> every stage check."""
+    """Whole chain from one command: probe -> enrich -> dedupe -> every stage check."""
     print("== probe")
     cmd_probe(args)
     print("== enrich")
     cmd_enrich(args)
+    print("== dedupe")
+    cmd_dedupe(args)
     failed = []
     for check in CHECKS:
         res = subprocess.run([sys.executable, check], capture_output=True,
@@ -78,14 +94,14 @@ def cmd_all(args):
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument("command", choices=["probe", "enrich", "all"])
+    p.add_argument("command", choices=["probe", "enrich", "dedupe", "all"])
     p.add_argument("--max-pages", type=int, default=30)
     p.add_argument("--offline", action="store_true")
     p.add_argument("--mock", action="store_true")
     p.add_argument("--limit", type=int, default=None, help="max events to enrich")
     p.add_argument("--config", default="config/pipeline.yaml")
     args = p.parse_args()
-    {"probe": cmd_probe, "enrich": cmd_enrich, "all": cmd_all}[args.command](args)
+    {"probe": cmd_probe, "enrich": cmd_enrich, "dedupe": cmd_dedupe, "all": cmd_all}[args.command](args)
 
 
 if __name__ == "__main__":

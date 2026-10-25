@@ -44,3 +44,19 @@
 - **Gap found:** student_fit is almost constant (24 of 28 events = 3).
   The field passes validation but carries no information. Format checks
   cannot detect this; a distribution check could.
+
+## 2026-10-25: student_fit from category
+
+- **AI assistance:** change drafted with Claude Code; we chose the approach
+  and reviewed the score table.
+- **Changed:** student_fit is no longer asked from the model. The prompt
+  asks for three keys (category, summary_en, summary_no); the code sets
+  student_fit from a fixed table per category (`STUDENT_FIT` in
+  `harness/models.py`). This removes the "omits student_fit" failure and the
+  fit_missing workaround, and the score is now reproducible.
+- **Added:** category "workshop" (student_fit 3). "Åpent skaperverksted"
+  had no fitting category and was labelled food_drink; workshop gives the
+  model a correct option. Not yet confirmed on a real-model run.
+- **Trade-off:** the score is only as good as the category. A wrong label
+  now also gives a wrong student_fit, and all events in one category get
+  the same score.

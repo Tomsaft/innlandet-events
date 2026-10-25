@@ -5,7 +5,7 @@ class MockClient(LLMClient):
     def __init__(self, replies=None):
         self._replies = replies or [
             '{"category": "concert", "summary_en": "Mock summary.", '
-            '"summary_no": "Mock sammendrag.", "student_fit": 2}'
+            '"summary_no": "Mock sammendrag."}'
         ]
         self._i = 0
 

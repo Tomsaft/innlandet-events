@@ -60,7 +60,7 @@ exits 0 only if all checks pass:
 python run.py all --offline --mock
 ```
 
-Expected: `25 events, {'past': ..., 'failed': 0, 'fit_missing': 0}, stopped: all_items_done`,
+Expected: `25 events, {'past': ..., 'failed': 0}, stopped: all_items_done`,
 then `PASS` for each check and `2/2 checks passed`.
 
 The same steps one at a time:

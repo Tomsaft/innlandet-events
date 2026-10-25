@@ -32,7 +32,8 @@ What the checks verify:
    `student_fit` is an integer 0–3.
 3. **Rules done in code are applied** (`check_enrich.py`): no event that has
    already ended is kept; `cancelled` is true exactly when the title says
-   avlyst/cancelled.
+   avlyst/cancelled. (`student_fit` is also set in code, from a fixed table
+   per category, but no check compares it to the table yet.)
 4. **No event is duplicated** (`check_dedupe.py`, task 003): no two output
    events share (normalised title, start instant in UTC, normalised venue);
    output count equals the number of unique keys in the input; synthetic
@@ -47,8 +48,8 @@ What the checks verify:
 ## Known gaps (not yet checked by code)
 - Correctness of `category` (a valid but wrong label passes; see
   docs/prompt-log.md, "Åpent skaperverksted" labelled food_drink).
-- Usefulness of `student_fit` (almost constant across events; a
-  distribution check could catch this).
+- Sense of the `student_fit` table (one fixed score per category, chosen
+  by us; a wrong `category` also gives a wrong `student_fit`).
 - `language` and `venue` presence on enriched events.
 - Translation quality of `summary_no` vs `summary_en` (candidate for
   LLM-as-judge in the final evaluation harness).

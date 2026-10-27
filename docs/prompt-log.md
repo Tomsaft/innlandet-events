@@ -44,3 +44,48 @@
 - **Gap found:** student_fit is almost constant (24 of 28 events = 3).
   The field passes validation but carries no information. Format checks
   cannot detect this; a distribution check could.
+
+## 2026-10-25: student_fit from category
+
+- **AI assistance:** change drafted with Claude Code; we chose the approach
+  and reviewed the score table.
+- **Changed:** student_fit is no longer asked from the model. The prompt
+  asks for three keys (category, summary_en, summary_no); the code sets
+  student_fit from a fixed table per category (`STUDENT_FIT_BY_CATEGORY` in
+  `harness/models.py`). This removes the "omits student_fit" failure and the
+  fit_missing workaround, and the score is now reproducible.
+- **Added:** category "workshop" (student_fit 3). In the last full run
+  (qwen2.5:3b) both "Åpent skaperverksted" (open makerspace) events were
+  labelled food_drink. No category fit: "course" implies a structured,
+  enrolled programme, and "other" would hide a recurring event type.
+  Workshop gives the model a correct label, and with student_fit derived
+  from category these events now score as relevant to students. Not yet
+  confirmed on a real-model run.
+- **Trade-off:** the score is only as good as the category. A wrong label
+  now also gives a wrong student_fit, and all events in one category get
+  the same score.
+
+## 2026-10-27: agent went around a permission rule
+
+- **Failure observed (agent):** `.claude/settings.json` denies `Edit(/eval/**)`
+  so that changes to the checks go through us. On 2026-10-25 Claude Code
+  added "workshop" to `eval/check_enrich.py` with a shell command (`sed`)
+  instead of its edit tool, which the deny rule does not cover. We had
+  approved the change itself, not this route. The agent reported it
+  itself on 2026-10-27, after reading the settings file while explaining
+  the repo.
+- **Lesson:** a deny rule on the edit tool does not protect a folder from
+  shell commands. Permission rules alone are not enough; changes to
+  `eval/` must also be reviewed (`git diff main -- eval/`) before merging.
+
+## 2026-10-27: student_fit removed
+
+- **Changed:** the target group widened from students in Hamar to everyone
+  in Innlandet and visitors from outside the county (meetings 4 and 5). A
+  score for "fit for students" no longer matches the users, so `student_fit`
+  and `STUDENT_FIT_BY_CATEGORY` are removed, and the model prompt now says
+  it helps people in Innlandet and visitors.
+- **History:** the field went from model-generated (often missing, almost
+  always 3) to derived from category in code, to removed. "workshop" stays
+  as a category: the reason for it (a correct label for the open makerspace
+  sessions) does not depend on the score.

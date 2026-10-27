@@ -2,7 +2,7 @@
 
 A small agentic harness that collects public event listings in Innlandet
 (starting with Hamar), normalises them with an LLM, and produces short
-English/Norwegian summaries aimed at students. Course project for
+English/Norwegian summaries for everyone in Innlandet and visitors. Course project for
 KIUA-2003, University of Inland Norway.
 
 Each stage writes a file, and each stage has an independent check in `eval/`
@@ -60,7 +60,7 @@ exits 0 only if all checks pass:
 python run.py all --offline --mock
 ```
 
-Expected: `25 events, {'past': ..., 'failed': 0, 'fit_missing': 0}, stopped: all_items_done`,
+Expected: `25 events, {'past': ..., 'failed': 0}, stopped: all_items_done`,
 then `PASS` for each check and `2/2 checks passed`.
 
 The same steps one at a time:

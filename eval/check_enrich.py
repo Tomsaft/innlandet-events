@@ -12,7 +12,7 @@ FIXTURE = ROOT / "fixtures" / "hamar_kommune.json"
 # Independent copy on purpose: the check must not import what it checks.
 CATEGORIES = {"concert", "theatre", "talk", "exhibition", "sports", "kids",
               "senior", "course", "market", "food_drink", "religious",
-              "meeting", "other"}
+              "meeting", "workshop", "other"}
 CANCELLED = re.compile(r"\b(avlyst|avlyses|cancelled|canceled)\b", re.I)
 EMAIL = re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+")
 PHONE = re.compile(r"\+47|(?<!\d)\d{8}(?!\d)|(?<!\d)\d{2}(?: \d{2}){3}(?!\d)")
@@ -32,6 +32,7 @@ for e in events:
     for k in ("summary_en", "summary_no"):
         assert isinstance(e[k], str) and e[k].strip(), f"empty {k}: {u}"
         assert not EMAIL.search(e[k]) and not PHONE.search(e[k]), f"PII in {k}: {u}"
+
     end = datetime.fromisoformat(e["end"] or e["start"])
     assert end >= now, f"past event kept: {u} ({e['start']})"
 

@@ -8,17 +8,16 @@ from harness.models import CATEGORIES, Event, RawItem
 
 CANCELLED = re.compile(r"\b(avlyst|avlyses|cancelled|canceled)\b", re.I)
 
-SYSTEM = f"""You help students (Norwegian and international) find events in Hamar, Norway.
-You get one event as text. Reply with ONLY a JSON object with exactly these four keys:
+SYSTEM = f"""You help people in Innlandet, Norway, and visitors find local events (Norwegian and English).
+You get one event as text. Reply with ONLY a JSON object with exactly these three keys:
 - "category": one of {CATEGORIES}
 - "summary_en": ONE English sentence, max 25 words
 - "summary_no": the same sentence in Norwegian (bokmål), max 25 words
-- "student_fit": integer 0-3 (0 = not relevant for students, 3 = very relevant)
 Rules: use only facts from the text. Do not invent dates, times, prices or names.
 Do not copy the description. Do not include URLs.
 Do not include phone numbers or email addresses.
 Example reply:
-{{"category": "concert", "summary_en": "A live concert at the venue.", "summary_no": "En konsert på stedet.", "student_fit": 2}}"""
+{{"category": "concert", "summary_en": "A live concert at the venue.", "summary_no": "En konsert på stedet."}}"""
 
 def build_messages(item: RawItem) -> list[dict]:
     user = (
@@ -46,12 +45,6 @@ def parse_reply(text: str) -> dict:
             raise ValueError(f"{k} too long ({len(d[k].split())} words)")
         if "http" in d[k] or "www." in d[k]:
             raise ValueError(f"URL in {k}")
-    fit = d.get("student_fit")
-    if fit is None:
-        d["student_fit"] = 0          # missing: safe default, counted by caller
-        d["fit_missing"] = True
-    elif isinstance(fit, bool) or not isinstance(fit, int) or not 0 <= fit <= 3:
-        raise ValueError(f"bad student_fit: {fit!r}")
     return d
 
 
@@ -61,7 +54,7 @@ def is_past(item: RawItem, now: datetime) -> bool:
 
 def enrich(items, client, model, temperature, budget, limit=None, now=None):
     now = now or datetime.now(timezone.utc)
-    events, stats = [], {"past": 0, "failed": 0, "fit_missing": 0}
+    events, stats = [], {"past": 0, "failed": 0}
     for item in items:
         if limit is not None and len(events) >= limit:
             budget.stop("limit")
@@ -91,15 +84,13 @@ def enrich(items, client, model, temperature, budget, limit=None, now=None):
         if reply is None:
             stats["failed"] += 1
             continue
-        if reply.get("fit_missing"):
-            stats["fit_missing"] += 1
         events.append(Event(
             title=item.title, start=item.start, end=item.end, venue=item.venue,
             source_id=item.source_id, source_url=item.url, language=item.language,
             description=item.description,
             cancelled=bool(CANCELLED.search(item.title)),
             category=reply["category"], summary_en=reply["summary_en"].strip(),
-            summary_no=reply["summary_no"].strip(), student_fit=reply["student_fit"],
+            summary_no=reply["summary_no"].strip(),
         ))
     if budget.stop_reason is None:
         budget.stop("all_items_done")

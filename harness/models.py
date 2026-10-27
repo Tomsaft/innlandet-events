@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 
 CATEGORIES = ["concert", "theatre", "talk", "exhibition", "sports", "kids",
               "senior", "course", "market", "food_drink", "religious",
-              "meeting", "other"]
+              "meeting", "workshop", "other"]
 
 @dataclass
 class RawItem:
@@ -36,5 +36,4 @@ class Event:
     cancelled: bool = False
     summary_en: str = ""
     summary_no: str = ""
-    student_fit: int = 0          # 0 = not relevant ... 3 = very relevant
     tags: list[str] = field(default_factory=list)

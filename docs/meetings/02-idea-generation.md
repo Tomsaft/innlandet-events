@@ -1,6 +1,6 @@
 # Meeting 2: Idea generation
 
-**Date:** [date, before 2026-10-20] | **Attendees:** [names]
+**Date:** 14.10.2026 | **Attendees:** Tord & Steffen | **Format:** online
 
 **Purpose:** Find a project idea to build on.
 
@@ -11,5 +11,4 @@
 - Candidate ideas
 
 ## Outcome
-A direction around community integration for newcomers. The problem we
-settled on follows in meeting 3.
+A direction around community integration for newcomers

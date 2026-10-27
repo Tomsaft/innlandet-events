@@ -1,6 +1,6 @@
 # Meeting 5: Feedback from the course lecturer
 
-**Date:** 2026-10-20 | **Attendees:** [names, lecturer]
+**Date:** 2026-10-20 | **Attendees:** Tord & Steffen + Lecturer | **Format:** online
 
 ## Feedback
 - The project was well received.

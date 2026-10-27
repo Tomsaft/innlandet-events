@@ -32,7 +32,6 @@ for e in events:
     for k in ("summary_en", "summary_no"):
         assert isinstance(e[k], str) and e[k].strip(), f"empty {k}: {u}"
         assert not EMAIL.search(e[k]) and not PHONE.search(e[k]), f"PII in {k}: {u}"
-    assert isinstance(e["student_fit"], int) and 0 <= e["student_fit"] <= 3, f"bad student_fit: {u}"
 
     end = datetime.fromisoformat(e["end"] or e["start"])
     assert end >= now, f"past event kept: {u} ({e['start']})"

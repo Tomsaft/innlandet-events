@@ -1,28 +1,28 @@
 # Innlandet Events
 
 A small agentic harness that collects public event listings in Innlandet
-(starting with Hamar), normalises them with an LLM, and produces short
-English/Norwegian summaries for everyone in Innlandet and visitors. Course project for
-KIUA-2003, University of Inland Norway.
+(starting with Hamar), normalises them with an LLM, removes duplicates, and
+produces short English/Norwegian summaries for everyone in Innlandet and
+visitors. Course project for KIUA-2003, University of Inland Norway.
 
 Each stage writes a file, and each stage has an independent check in `eval/`
 that exits 0 (PASS) or 1 (FAIL).
 
 ```
-hamar.kommune.no ──probe──▶ fixtures/hamar_kommune.json ──enrich (LLM)──▶ out/events.json
-   (sitemap + event pages)     fixtures/raw/*.html                         out/run.json
-                                     │                                          │
-                             eval/check_probe.py                       eval/check_enrich.py
+hamar.kommune.no ──probe──▶ fixtures/hamar_kommune.json ──enrich (LLM)──▶ out/events.json ──dedupe──▶ out/events_deduped.json
+   (sitemap + event pages)     fixtures/raw/*.html                         out/run.json                 out/dedupe.json
+                                     │                                          │                               │
+                             eval/check_probe.py                       eval/check_enrich.py            eval/check_dedupe.py
 ```
 
 | Stage | Command | Reads | Writes | Check |
 |---|---|---|---|---|
 | 1. Probe | `python run.py probe` | hamar.kommune.no (live) | `fixtures/hamar_kommune.json`, `fixtures/raw/*.html` | `eval/check_probe.py` |
 | 2. Enrich | `python run.py enrich` | fixtures (offline) | `out/events.json`, `out/run.json` | `eval/check_enrich.py` |
-| 3. Dedupe | *in progress (task 003)* | `out/events.json` | `out/events_deduped.json`, `out/dedupe.json` | `eval/check_dedupe.py` |
+| 3. Dedupe | `python run.py dedupe` | `out/events.json` | `out/events_deduped.json`, `out/dedupe.json` | `eval/check_dedupe.py` |
 
-The fixtures are committed, so you can reproduce stage 2 without network
-access and, with `--mock`, without a model.
+The fixtures are committed, so you can reproduce stages 2 and 3 without
+network access and, with `--mock`, without a model.
 
 ## Requirements
 
@@ -53,27 +53,31 @@ pip install -r requirements.txt
 
 ## Quick start: reproduce the run (no network, no model)
 
-One command runs the whole chain (probe → enrich → every stage check) and
+One command runs the whole chain (probe → enrich → dedupe → every stage check) and
 exits 0 only if all checks pass:
 
 ```powershell
 python run.py all --offline --mock
 ```
 
-Expected: `25 events, {'past': ..., 'failed': 0}, stopped: all_items_done`,
-then `PASS` for each check and `2/2 checks passed`.
+Expected: `N events, {'past': ..., 'failed': 0}, stopped: all_items_done`,
+then `N in, N out, 0 removed` from dedupe, `PASS` for each check and
+`3/3 checks passed`.
 
 The same steps one at a time:
 
 ```powershell
 python run.py enrich --mock
+python run.py dedupe
 python eval/check_probe.py
 python eval/check_enrich.py
+python eval/check_dedupe.py
 ```
 
 Without `--offline`, `all` probes the live source first (needs
-`CRAWLER_CONTACT`); without `--mock` it uses the real model. The exact `past` count depends on today's date,
-because events that have already ended are filtered out.
+`CRAWLER_CONTACT`); without `--mock` it uses the real model. The number of
+events and the `past` count depend on today's date, because events that have
+already ended are filtered out.
 
 ## Real model run
 
@@ -126,7 +130,8 @@ Before a run replaces a file, the old version is saved to
 
 - `enrich` **moves** the previous `out/events.json` and `out/run.json` into
   the archive, so a crashed run can never leave stale output for `eval/` to
-  pass on.
+  pass on. `dedupe` does the same with `out/events_deduped.json` and
+  `out/dedupe.json`.
 - A live `probe` **copies** the current fixtures into the archive before
   fetching, so a failed fetch still leaves fixtures to run offline on.
 
@@ -136,11 +141,11 @@ the submission.
 ## Repository layout
 
 ```
-run.py                  CLI entry point (probe, enrich, all)
+run.py                  CLI entry point (probe, enrich, dedupe, all)
 config/pipeline.yaml    model, temperature, budget limits, audience, languages
 config/regions.yaml     regions and their sources (Hamar now, more towns later)
 harness/sources/        one adapter per calendar (hamar_kommune.py, sitemap.py)
-harness/stages/         pipeline stages (enrich.py; dedupe.py in task 003)
+harness/stages/         pipeline stages (enrich.py, dedupe.py)
 harness/llm/            Ollama client and mock client
 harness/budget.py       turn/token/time budget (unchanged course starter code)
 harness/pii.py          redacts emails and phone numbers at extraction
@@ -149,7 +154,7 @@ harness/models.py       RawItem and Event dataclasses (no person fields)
 eval/                   acceptance checks, one per task (exit 0 = PASS)
 fixtures/               committed sample of the source (input for offline runs)
 tasks/                  task specifications given to the coding agent
-docs/                   prompt log, source notes, meeting reports
+docs/                   prompt log, source notes, exam plan, meeting reports
 ```
 
 ## Context files for the coding agent

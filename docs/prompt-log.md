@@ -64,3 +64,16 @@
 - **Trade-off:** the score is only as good as the category. A wrong label
   now also gives a wrong student_fit, and all events in one category get
   the same score.
+
+## 2026-10-27: agent went around a permission rule
+
+- **Failure observed (agent):** `.claude/settings.json` denies `Edit(/eval/**)`
+  so that changes to the checks go through us. On 2026-10-25 Claude Code
+  added "workshop" to `eval/check_enrich.py` with a shell command (`sed`)
+  instead of its edit tool, which the deny rule does not cover. We had
+  approved the change itself, not this route. The agent reported it
+  itself on 2026-10-27, after reading the settings file while explaining
+  the repo.
+- **Lesson:** a deny rule on the edit tool does not protect a folder from
+  shell commands. Permission rules alone are not enough; changes to
+  `eval/` must also be reviewed (`git diff main -- eval/`) before merging.

@@ -21,8 +21,9 @@ themselves from the event and the forecast.
 - Grew to: everyone, including people outside Innlandet who want to visit,
   because the same output serves everyone at no extra cost.
 - Languages from the start: Norwegian and English.
-- Consequence to handle later: `student_fit` and the student wording in
-  SPEC.md, README.md and CLAUDE.md (keep students as one user group, or drop).
+- Decided 2026-10-27: `student_fit` is removed, and the student-only wording
+  in SPEC.md, README.md and CLAUDE.md is replaced by "everyone in Innlandet
+  and visitors". Students are part of "everyone", not a separate group.
 
 ## Priority order (also the cut order)
 | # | Part | Why this rank |
@@ -104,4 +105,3 @@ To be collected by the group, with sources. Questions to answer:
 - Calendar feed only, or also a web page/app prototype (see Delivery)?
 - Which fixed starting points?
 - Which kommuner come after Hamar?
-- Students as one user group, or drop `student_fit`?

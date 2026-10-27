@@ -4,11 +4,11 @@ from datetime import datetime, timezone
 
 import requests
 
-from harness.models import CATEGORIES, STUDENT_FIT_BY_CATEGORY, Event, RawItem
+from harness.models import CATEGORIES, Event, RawItem
 
 CANCELLED = re.compile(r"\b(avlyst|avlyses|cancelled|canceled)\b", re.I)
 
-SYSTEM = f"""You help students (Norwegian and international) find events in Hamar, Norway.
+SYSTEM = f"""You help people in Innlandet, Norway, and visitors find local events (Norwegian and English).
 You get one event as text. Reply with ONLY a JSON object with exactly these three keys:
 - "category": one of {CATEGORIES}
 - "summary_en": ONE English sentence, max 25 words
@@ -91,7 +91,6 @@ def enrich(items, client, model, temperature, budget, limit=None, now=None):
             cancelled=bool(CANCELLED.search(item.title)),
             category=reply["category"], summary_en=reply["summary_en"].strip(),
             summary_no=reply["summary_no"].strip(),
-            student_fit=STUDENT_FIT_BY_CATEGORY[reply["category"]],
         ))
     if budget.stop_reason is None:
         budget.stop("all_items_done")

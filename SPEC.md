@@ -2,10 +2,13 @@
 
 ## Problem
 Event information in Innlandet is scattered across municipal sites, venues
-and PDFs. Students (Norwegian and international) miss events.
+and PDFs, mostly in Norwegian only. People miss events, especially
+newcomers and visitors who do not know where to look.
 
 ## Users
-Students at the University of Inland Norway (Hamar first), later all residents.
+Everyone in Innlandet, and people from outside the county who want to see
+what is on there. Norwegian and English from the start. (First version:
+students in Hamar; widened in meeting 4, see docs/meetings/.)
 
 ## Definition of success (binary-checkable)
 The workflow is correct when every stage check below exits 0. Each check is
@@ -28,12 +31,10 @@ What the checks verify:
 2. **Every event is traceable and faithful** (`check_enrich.py`):
    at least 5 events; every `source_url` exists in the fixture; every year
    mentioned in a summary appears in the source text; `category` is one of
-   the fixed list; `summary_en` and `summary_no` are non-empty;
-   `student_fit` is an integer 0–3.
+   the fixed list; `summary_en` and `summary_no` are non-empty.
 3. **Rules done in code are applied** (`check_enrich.py`): no event that has
    already ended is kept; `cancelled` is true exactly when the title says
-   avlyst/cancelled. (`student_fit` is also set in code, from a fixed table
-   per category, but no check compares it to the table yet.)
+   avlyst/cancelled.
 4. **No event is duplicated** (`check_dedupe.py`, task 003): no two output
    events share (normalised title, start instant in UTC, normalised venue);
    output count equals the number of unique keys in the input; synthetic
@@ -48,8 +49,6 @@ What the checks verify:
 ## Known gaps (not yet checked by code)
 - Correctness of `category` (a valid but wrong label passes; see
   docs/prompt-log.md, "Åpent skaperverksted" labelled food_drink).
-- Sense of the `student_fit` table (one fixed score per category, chosen
-  by us; a wrong `category` also gives a wrong `student_fit`).
 - `language` and `venue` presence on enriched events.
 - Translation quality of `summary_no` vs `summary_en` (candidate for
   LLM-as-judge in the final evaluation harness).

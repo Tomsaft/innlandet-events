@@ -77,3 +77,15 @@
 - **Lesson:** a deny rule on the edit tool does not protect a folder from
   shell commands. Permission rules alone are not enough; changes to
   `eval/` must also be reviewed (`git diff main -- eval/`) before merging.
+
+## 2026-10-27: student_fit removed
+
+- **Changed:** the target group widened from students in Hamar to everyone
+  in Innlandet and visitors from outside the county (meetings 4 and 5). A
+  score for "fit for students" no longer matches the users, so `student_fit`
+  and `STUDENT_FIT_BY_CATEGORY` are removed, and the model prompt now says
+  it helps people in Innlandet and visitors.
+- **History:** the field went from model-generated (often missing, almost
+  always 3) to derived from category in code, to removed. "workshop" stays
+  as a category: the reason for it (a correct label for the open makerspace
+  sessions) does not depend on the score.

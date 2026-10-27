@@ -1,6 +1,6 @@
 # Innlandet Events Harness
 Aggregates public event calendars for Innlandet (start: Hamar), normalises
-them with an LLM, and produces an EN/NO digest aimed at students.
+them with an LLM, and produces an EN/NO digest for everyone in Innlandet and visitors.
 
 ## Run (Python 3.14, venv at .venv)
 - Probe: `$env:CRAWLER_CONTACT = "<contact>"; python run.py probe` (required)

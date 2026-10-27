@@ -44,6 +44,10 @@ What the checks verify:
 6. **Every run is bounded and recorded** (`check_enrich.py`): `out/run.json`
    names the model and temperature, and the budget recorded a `stop_reason`.
 
+## Planned (exam)
+Travel (Entur), weather (Yr), more kommuner and delivery to users are
+planned, not built: see docs/plan.md.
+
 ## Known gaps (not yet checked by code)
 - Correctness of `category` (a valid but wrong label passes; see
   docs/prompt-log.md, "Åpent skaperverksted" labelled food_drink).

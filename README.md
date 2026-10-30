@@ -29,8 +29,7 @@ network access and, with `--mock`, without a model.
 - Python 3.14
 - For real model runs: [Ollama](https://ollama.com) running locally with the
   model from `config/pipeline.yaml` (default `qwen2.5:3b`)
-- For live probing only: network access and a contact address (see below)
-
+- For live probing only: network access and a contact address (see belo
 ## Setup
 
 Run every command from the repository root; paths are relative to it.

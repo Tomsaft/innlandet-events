@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="nb">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>InFoMo</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body data-sky="none">
+  <!-- Weather backdrop: driven by the forecast at the chosen event. -->
+  <div id="sky" aria-hidden="true">
+    <div class="stars"></div>
+    <div class="sun"></div>
+    <div class="clouds">
+      <i style="--t:6%;  --w:260px; --d:70s; --dl:-10s"></i>
+      <i style="--t:18%; --w:180px; --d:55s; --dl:-40s"></i>
+      <i style="--t:30%; --w:320px; --d:90s; --dl:-25s"></i>
+      <i style="--t:48%; --w:220px; --d:65s; --dl:-55s"></i>
+      <i style="--t:62%; --w:280px; --d:80s; --dl:-5s"></i>
+      <i style="--t:76%; --w:200px; --d:60s; --dl:-30s"></i>
+    </div>
+    <div class="fog"></div>
+  </div>
+  <canvas id="precip" aria-hidden="true"></canvas>
+  <div id="flash" aria-hidden="true"></div>
+
+  <header>
+    <div class="brand">
+      <h1>InFoMo</h1>
+      <p class="slogan">Info først. FOMO aldri.</p>
+    </div>
+    <button id="lang" type="button" aria-label="Language">EN</button>
+  </header>
+
+  <main>
+    <!-- Home: two picture tiles, then the chosen event and its weather -->
+    <section id="home-view">
+      <div class="tiles">
+        <button id="tile-events" class="tile" type="button">
+          <img src="/static/tile-events.svg" alt="">
+          <span class="tile-label"><span data-t="events"></span><small id="tile-events-sub"></small></span>
+        </button>
+        <button id="tile-travel" class="tile" type="button" disabled>
+          <img src="/static/tile-travel.svg" alt="">
+          <span class="tile-label"><span data-t="travel"></span><small id="tile-travel-sub"></small></span>
+        </button>
+      </div>
+      <div id="chosen" hidden>
+        <article class="card rise" id="event-card"></article>
+        <article class="card rise" id="weather-card">
+          <h3 data-t="weather"></h3>
+          <div id="weather"></div>
+        </article>
+      </div>
+    </section>
+
+    <!-- Events panel: the events tile grows into this -->
+    <section id="events-view" class="panel" hidden>
+      <div class="panel-head">
+        <button class="back" type="button">← <span data-t="back"></span></button>
+        <h2 data-t="events"></h2>
+      </div>
+      <div class="filters">
+        <input id="search" type="search" data-tp="search">
+        <label><span data-t="from_date"></span> <input id="date" type="date"></label>
+      </div>
+      <p id="list-status" class="muted"></p>
+      <ul id="events"></ul>
+    </section>
+
+    <!-- Travel panel: the travel tile grows into this -->
+    <section id="travel-view" class="panel" hidden>
+      <div class="panel-head">
+        <button class="back" type="button">← <span data-t="back"></span></button>
+        <h2 data-t="travel"></h2>
+      </div>
+      <p id="travel-event"></p>
+      <p class="muted" data-t="from_where"></p>
+      <div id="origins" class="chips"></div>
+      <div class="place-search">
+        <input id="place" type="search" autocomplete="off" data-tp="place">
+        <ul id="place-hits" hidden></ul>
+      </div>
+      <div id="trips"></div>
+    </section>
+  </main>
+
+  <footer class="muted">
+    <span data-t="sources"></span>
+    <a href="https://www.hamar.kommune.no/kulturkalender" target="_blank" rel="noopener">Hamar kommune</a> ·
+    <a href="https://entur.no" target="_blank" rel="noopener">Entur</a> ·
+    <a href="https://www.yr.no" target="_blank" rel="noopener">Yr / MET Norway</a>
+  </footer>
+  <script src="/static/app.js"></script>
+</body>
+</html>

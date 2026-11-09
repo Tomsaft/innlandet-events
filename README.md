@@ -112,6 +112,35 @@ CRAWLER_CONTACT="your.name@example.com" python run.py probe --max-pages 30
 30 pages take about 3 minutes. `python run.py probe --offline` re-reads the
 committed fixtures without any network access.
 
+## Demo web page: InFoMo (events + travel + weather)
+
+*InFoMo: Info først. FOMO aldri.* A small local web page on top of the
+pipeline output: open the events tile and choose an event and a date, see the
+weather at the venue (Yr / MET Norway) as the page's sky, then open the travel
+tile to see how to get there by public transport (Entur). Run the pipeline first so `out/` exists.
+
+```powershell
+$env:CRAWLER_CONTACT = "your.name@example.com"   # MET Norway requires contact info
+python run.py serve                                # http://127.0.0.1:8000
+```
+
+- Reads `out/events_deduped.json` (falls back to `out/events.json`) and
+  `fixtures/hamar_kommune.json` (venue addresses); writes nothing.
+- Starting points: fixed buttons (Hamar stasjon, the campus, Oslo S, Oslo
+  lufthavn; set in `config/web.yaml`) or any stop/address via Entur search.
+  Trips arrive 10 minutes before the event starts.
+- Weather is shown when the event is inside MET's forecast (about 10 days),
+  with a certainty marker (our own rule of thumb, see `docs/plan.md`).
+- Entur and Yr can each be switched off in `config/web.yaml`; the events
+  still show, marked "travel info unavailable" / "no forecast".
+- Deep link for presenting: `http://127.0.0.1:8000/#e=<event id>&o=<origin id>`
+  (event ids come from `/api/events`). Add `&sky=rain` (or `clear`, `partly`,
+  `cloudy`, `fog`, `snow`, `sleet`, `thunder`, `night`) to force the weather
+  backdrop, e.g. to show the rain effect on a sunny day.
+- Animations are turned off for users who ask their system for reduced motion.
+- Descriptions are not sent to the browser (they can name contact people);
+  the user's starting point is not logged or stored.
+
 ## Command reference
 
 | Flag | Applies to | Effect |
@@ -121,6 +150,8 @@ committed fixtures without any network access.
 | `--mock` | enrich, all | Use the mock LLM client (fixed replies) |
 | `--limit N` | enrich | Enrich at most N events |
 | `--config PATH` | enrich | Pipeline config (default `config/pipeline.yaml`) |
+| `--web-config PATH` | serve | Demo page config (default `config/web.yaml`) |
+| `--host`, `--port` | serve | Address to serve on (default `127.0.0.1:8000`) |
 
 ## Earlier runs are never overwritten
 
@@ -140,12 +171,14 @@ the submission.
 ## Repository layout
 
 ```
-run.py                  CLI entry point (probe, enrich, dedupe, all)
+run.py                  CLI entry point (probe, enrich, dedupe, all, serve)
 config/pipeline.yaml    model, temperature, budget limits, audience, languages
 config/regions.yaml     regions and their sources (Hamar now, more towns later)
+config/web.yaml         demo page: Entur/Yr on/off, fixed starting points
 harness/sources/        one adapter per calendar (hamar_kommune.py, sitemap.py)
 harness/stages/         pipeline stages (enrich.py, dedupe.py)
 harness/llm/            Ollama client and mock client
+harness/web/            demo web page: stdlib server, Entur + MET clients, static UI
 harness/budget.py       turn/token/time budget (unchanged course starter code)
 harness/pii.py          redacts emails and phone numbers at extraction
 harness/archive.py      keeps earlier outputs instead of overwriting them
@@ -175,6 +208,9 @@ Each task follows the same loop: write the spec and a failing check in
 ## Data and privacy
 
 - Only public event listings from hamar.kommune.no/kulturkalender are used.
+  The demo page also calls Entur's open APIs (with an `ET-Client-Name`
+  header) and MET Norway's Locationforecast (identifying User-Agent,
+  responses cached until their `Expires` time, coordinates at 4 decimals).
   See `docs/source-notes.md` for robots.txt and terms.
 - The data model has no fields for performers, contacts or organiser persons.
 - Emails and phone numbers are redacted when pages are parsed

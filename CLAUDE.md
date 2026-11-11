@@ -18,3 +18,14 @@ them with an LLM, and produces an EN/NO digest for everyone in Innlandet and vis
   one to `harness.archive.keep` (move outputs, copy inputs). Never delete
   `archive/`.
 - stdlib + requests + PyYAML + beautifulsoup4 only.
+
+## Agents (.claude/agents/)
+The main session is the master: it talks with the user, plans, and delegates.
+- `backend`: Python in harness/, run.py, config/ (not harness/web/static/)
+- `frontend`: harness/web/static/ only
+- `qa`: read-only, independent check of every change before it goes to the user
+Workflow: agree the task with the user, brief backend and/or frontend (they
+can run in parallel when they don't depend on each other), then send qa the
+original task and changed files, never the implementer's report. If an API
+response changes, brief the other agent. Fix QA findings through the owning
+agent, then re-run qa. Only the master commits, and only when the user asks.

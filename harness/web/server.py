@@ -56,7 +56,8 @@ def load_events() -> list[dict]:
             "address": addresses.get(e["source_url"], ""),
             "municipality": e.get("municipality", ""), "category": e.get("category", ""),
             "cancelled": e.get("cancelled", False), "summary_en": e.get("summary_en", ""),
-            "summary_no": e.get("summary_no", ""), "source_url": e["source_url"],
+            "summary_no": e.get("summary_no", ""), "summary_de": e.get("summary_de", ""),
+            "source_url": e["source_url"],
         })
     return sorted(out, key=lambda e: e["start"])
 

@@ -42,12 +42,37 @@ const TEXT = {
     wind: "vind", precip: "nedbør", transfers: (n) => n === 0 ? "direkte" : `${n} bytte${n > 1 ? "r" : ""}`,
     walk: "Gå", min: "min", plan_entur: "Åpne i Entur",
   },
+  de: {
+    events: "Veranstal\u00ADtungen", travel: "Anreise", back: "Zurück",
+    search: "Veranstaltungen oder Orte suchen", from_date: "Ab",
+    events_sub: (n) => `${n} bevorstehend`,
+    travel_locked: "Zuerst eine Veranstaltung wählen", travel_open: "Reise mit Entur planen",
+    travel_from: "Ab", weather: "Wetter am Veranstaltungsort",
+    from_where: "Von wo reisen Sie an?",
+    place: "Oder nach Haltestelle oder Adresse suchen", sources: "Daten:",
+    loading: "Wird geladen…", none: "Keine passenden Veranstaltungen.",
+    time_unknown: "Uhrzeit nicht angegeben", more: "Mehr Infos bei der Quelle",
+    cancelled: "Abgesagt", approx: "Ort ist ungefähr (Ortsmitte).",
+    no_forecast: (d, until) => `Noch keine Vorhersage: Die Veranstaltung ist in ${d} ${d === 1 ? "Tag" : "Tagen"}, die Vorhersage reicht bis ${until}.`,
+    conf: { high: "Recht sicher", medium: "Ziemlich unsicher", low: "Unsicher (Langfristvorhersage)" },
+    conf_note: "Die Sicherheit ist unsere eigene Faustregel, je nach Tagen bis zur Veranstaltung.",
+    guessed_wx: "Uhrzeit nicht angegeben, Anzeige für die Mittagszeit.", guessed_trip: "Uhrzeit nicht angegeben, Ankunft bis",
+    arrive_by: "Ankunft bis", no_trips: "Keine Verbindungen für diese Zeit gefunden.",
+    travel_off: "Reiseinformationen nicht verfügbar", weather_off: "Keine Vorhersage",
+    wind: "Wind", precip: "Niederschl.", transfers: (n) => n === 0 ? "direkt" : `${n} Umstieg${n > 1 ? "e" : ""}`,
+    walk: "Fußweg", min: "Min.", plan_entur: "In Entur öffnen",
+  },
 };
+const LANGS = { no: { html: "nb", locale: "nb-NO" }, en: { html: "en", locale: "en-GB" }, de: { html: "de", locale: "de-DE" } };
 const CATEGORY = {
   no: { concert: "konsert", theatre: "teater", talk: "foredrag", exhibition: "utstilling",
         sports: "sport", kids: "barn", senior: "senior", course: "kurs", market: "marked",
         food_drink: "mat og drikke", religious: "religiøst", meeting: "møte",
         workshop: "verksted", other: "annet" },
+  de: { concert: "Konzert", theatre: "Theater", talk: "Vortrag", exhibition: "Ausstellung",
+        sports: "Sport", kids: "Kinder", senior: "Senioren", course: "Kurs", market: "Markt",
+        food_drink: "Essen & Trinken", religious: "Religiös", meeting: "Treffen",
+        workshop: "Workshop", other: "Sonstiges" },
 };
 
 let lang = "no", events = [], config = null, selected = null, origin = null;
@@ -72,7 +97,7 @@ function h(tag, attrs = {}, ...kids) {
 // replaceChildren, but skipping the false/null that `cond && el` leaves behind.
 const fill = (el, ...kids) => el.replaceChildren(...kids.flat().filter((k) => k !== false && k != null));
 
-const locale = () => (lang === "no" ? "nb-NO" : "en-GB");
+const locale = () => LANGS[lang].locale;
 const fmtDate = (iso) => new Date(iso).toLocaleDateString(locale(),
   { weekday: "short", day: "numeric", month: "short", timeZone: "Europe/Oslo" });
 const fmtTime = (iso) => new Date(iso).toLocaleTimeString(locale(),
@@ -122,10 +147,11 @@ function renderTiles() {
 }
 
 function applyLang() {
-  document.documentElement.lang = lang === "no" ? "nb" : "en";
+  document.documentElement.lang = LANGS[lang].html;
   document.querySelectorAll("[data-t]").forEach((el) => (el.textContent = t(el.dataset.t)));
   document.querySelectorAll("[data-tp]").forEach((el) => (el.placeholder = t(el.dataset.tp)));
-  $("lang").textContent = lang === "en" ? "NO" : "EN";
+  document.querySelectorAll("#lang [data-lang]").forEach((b) =>
+    b.setAttribute("aria-pressed", String(b.dataset.lang === lang)));
   if (!config) return;
   renderTiles();
   renderList();
@@ -178,7 +204,7 @@ function renderChosen(animate = false) {
   if (animate) for (const card of $("chosen").children) {
     card.classList.remove("rise"); void card.offsetWidth; card.classList.add("rise");
   }
-  const summary = lang === "no" ? e.summary_no : e.summary_en;
+  const summary = lang === "no" ? e.summary_no : lang === "de" ? e.summary_de || e.summary_en : e.summary_en;
   const cat = (CATEGORY[lang] || {})[e.category] || e.category;
   fill($("event-card"),
     h("div", {}, h("span", { class: "tag" }, cat), e.cancelled && h("span", { class: "tag cancelled" }, t("cancelled"))),
@@ -403,8 +429,13 @@ function renderTrips(res) {
 // ---------- start ----------
 
 async function init() {
-  lang = navigator.language?.startsWith("en") ? "en" : "no";
-  $("lang").addEventListener("click", () => { lang = lang === "en" ? "no" : "en"; applyLang(); });
+  const nav = (navigator.language || "").toLowerCase();
+  lang = nav.startsWith("de") ? "de" : nav.startsWith("en") ? "en" : "no";
+  document.querySelectorAll("#lang [data-lang]").forEach((b) => b.addEventListener("click", () => {
+    if (lang === b.dataset.lang) return;
+    lang = b.dataset.lang;
+    applyLang();
+  }));
   $("tile-events").addEventListener("click", () => show("events"));
   $("tile-travel").addEventListener("click", openTravel);
   document.querySelectorAll(".back").forEach((b) => b.addEventListener("click", () => show("home")));

@@ -54,12 +54,24 @@ def is_past(item: RawItem, now: datetime) -> bool:
 
 
 def enrich(items, client, model, temperature, budget, limit=None, now=None):
+    """`limit` caps the enriched events PER source_id, so one source cannot use
+    it all. When the Budget stops, the upcoming items that were not reached
+    are counted per source_id in stats["not_enriched_budget"]."""
     now = now or datetime.now(timezone.utc)
-    events, stats = [], {"past": 0, "failed": 0}
-    for item in items:
-        if limit is not None and len(events) >= limit:
-            budget.stop("limit")
-            break
+    events, stats = [], {"past": 0, "failed": 0, "not_enriched_budget": {}}
+    per_source: dict[str, int] = {}
+    limited = False
+
+    def count_rest(rest):
+        left = stats["not_enriched_budget"]
+        for it in rest:
+            if not is_past(it, now):
+                left[it.source_id] = left.get(it.source_id, 0) + 1
+
+    for idx, item in enumerate(items):
+        if limit is not None and per_source.get(item.source_id, 0) >= limit:
+            limited = True
+            continue
         if is_past(item, now):
             stats["past"] += 1
             continue
@@ -81,19 +93,25 @@ def enrich(items, client, model, temperature, budget, limit=None, now=None):
             except ValueError as e:
                 print(f"warn: attempt {attempt + 1} failed for {name}: {e}")
         if budget.stop_reason in ("max_turns", "max_tokens", "max_seconds") and reply is None:
+            count_rest(items[idx:])           # this item and all later ones
             break
         if reply is None:
             stats["failed"] += 1
             continue
+        per_source[item.source_id] = per_source.get(item.source_id, 0) + 1
         events.append(Event(
             title=item.title, start=item.start, end=item.end, venue=item.venue,
             source_id=item.source_id, source_url=item.url, language=item.language,
+            original_url=item.original_url,
             description=item.description,
+            # Hamar default only for the Hamar source; others keep their own city.
+            municipality=item.municipality or (
+                Event.municipality if item.source_id == "hamar_kommune" else ""),
             cancelled=bool(CANCELLED.search(item.title)),
             category=reply["category"], summary_en=reply["summary_en"].strip(),
             summary_no=reply["summary_no"].strip(),
             summary_de=reply["summary_de"].strip(),
         ))
     if budget.stop_reason is None:
-        budget.stop("all_items_done")
+        budget.stop("limit" if limited else "all_items_done")
     return events, stats

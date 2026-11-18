@@ -3,230 +3,142 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="Beveg: se hva som skjer i Innlandet, hvordan du kommer deg dit og hvordan været blir.">
   <title>Beveg</title>
   <link rel="stylesheet" href="/static/style.css">
 </head>
-<body data-sky="none">
-  <!-- Weather backdrop: driven by the forecast at the chosen event. -->
-  <div id="sky" aria-hidden="true">
-    <div class="stars"></div>
-    <div class="sun"></div>
-    <div class="clouds">
-      <i style="--t:6%;  --w:260px; --d:70s; --dl:-10s"></i>
-      <i style="--t:18%; --w:180px; --d:55s; --dl:-40s"></i>
-      <i style="--t:30%; --w:320px; --d:90s; --dl:-25s"></i>
-      <i style="--t:48%; --w:220px; --d:65s; --dl:-55s"></i>
-      <i style="--t:62%; --w:280px; --d:80s; --dl:-5s"></i>
-      <i style="--t:76%; --w:200px; --d:60s; --dl:-30s"></i>
-    </div>
-    <div class="fog"></div>
-  </div>
-  <canvas id="precip" aria-hidden="true"></canvas>
-  <div id="flash" aria-hidden="true"></div>
+<body data-screen="home" data-sky="none" data-tod="day">
+  <a class="skip" href="#screen" data-t="skip">Hopp til innholdet</a>
 
-  <header>
-    <a id="mode-switch" class="mode-switch" href="#" hidden><span aria-hidden="true">&#8644;</span> <span data-t="switch_mode">Bytt modus</span></a>
-    <div class="brand">
-      <h1 aria-label="Beveg"><span aria-hidden="true">Beve<span class="g">g</span></span></h1>
-      <p class="slogan"><span class="sr-only" data-t="slogan">Se hva som skjer. Beveg deg dit.</span><span aria-hidden="true"><span class="s1" data-t="slogan_a">Se hva som skjer.</span> <span class="s2" data-t="slogan_b">Beveg deg dit.</span></span></p>
+  <header class="topbar">
+    <div class="topbar-row">
+      <a class="wordmark" href="#/" aria-label="Beveg, til forsiden" data-ta="home_link">
+        <svg class="mark" viewBox="0 0 40 40" aria-hidden="true" focusable="false">
+          <rect width="40" height="40" rx="12" class="mark-bg"/>
+          <circle cx="27" cy="14" r="6" class="mark-sun"/>
+          <path d="M0 27c7-6 13-6 20-1s13 5 20-1v15H0z" class="mark-hill"/>
+          <path d="M5 33c4-2.5 8-2.5 12 0s8 2.5 12 0 6-2 9-1" class="mark-wave"/>
+        </svg>
+        <span class="wm-text" aria-hidden="true">Beve<span class="wm-g">g</span><span class="wm-dash"></span></span>
+      </a>
+      <div class="tools">
+        <div id="lang" class="lang" role="group" aria-label="Språk" data-ta="lang_group">
+          <button type="button" data-lang="no" lang="nb" aria-label="NO, norsk" aria-pressed="true">NO</button>
+          <button type="button" data-lang="en" lang="en" aria-label="EN, English" aria-pressed="false">EN</button>
+        </div>
+        <button id="size" class="size-btn" type="button" aria-expanded="false" aria-controls="size-panel">
+          <span class="size-aa" aria-hidden="true">A<small>a</small></span>
+        </button>
+      </div>
+      <div id="size-panel" class="size-panel" hidden></div>
     </div>
-    <div id="lang" class="lang-switch" role="group" aria-label="Språk / Language / Sprache">
-      <button type="button" data-lang="no" lang="nb" aria-label="Norsk" aria-pressed="true">NO</button>
-      <button type="button" data-lang="en" lang="en" aria-label="English" aria-pressed="false">EN</button>
-      <button type="button" data-lang="de" lang="de" aria-label="Deutsch" aria-pressed="false">DE</button>
-    </div>
+    <p id="step" class="step"></p>
   </header>
 
-  <main>
-    <!-- Start screen: choose how to use the page. No hash = this view; #explore / #talk. -->
-    <section id="chooser-view" hidden>
-      <h2 id="chooser-title" class="chooser-title" tabindex="-1" data-t="choose"></h2>
-      <div class="modes">
-        <a class="mode-card explore" href="#explore">
-          <svg class="mode-icon" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
-            <rect x="5" y="5" width="16" height="16" rx="4"/><rect x="27" y="5" width="16" height="16" rx="4"/>
-            <rect x="5" y="27" width="16" height="16" rx="4"/><circle cx="35" cy="35" r="7"/><path d="M40 40l5 5"/>
-          </svg>
-          <span class="mode-name" data-t="mode_explore"></span>
-          <span class="mode-desc" data-t="mode_explore_desc"></span>
-        </a>
-        <a class="mode-card talk fn-voice" href="#talk">
-          <svg class="mode-icon" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
-            <rect x="17" y="4" width="14" height="25" rx="7"/><path d="M10 22a14 14 0 0 0 28 0M24 36v8M16 44h16"/>
-          </svg>
-          <span class="mode-name" data-t="mode_talk"></span>
-          <span class="mode-desc" data-t="mode_talk_desc"></span>
-        </a>
-      </div>
-      <a class="mcp-link" href="#mcp">
-        <svg viewBox="0 0 48 48" aria-hidden="true" focusable="false"><path d="M18 4v10M30 4v10M12 14h24v8a12 12 0 0 1-24 0zM24 34v10"/></svg>
-        <span data-t="mcp_title"></span>
-      </a>
-    </section>
+  <main id="screen" tabindex="-1"></main>
 
-    <!-- Explore: the interactive interface (tiles, panels, weather sky) -->
-    <div id="explore-view" hidden>
-      <!-- Home: two picture tiles, then the chosen event and its weather -->
-      <section id="home-view">
-        <div class="tiles">
-          <button id="tile-events" class="tile fn-events" type="button">
-            <img src="/static/tile-events.svg" alt="">
-            <span class="tile-label"><span data-t="events"></span><small id="tile-events-sub"></small></span>
-          </button>
-          <button id="tile-travel" class="tile fn-travel" type="button" disabled>
-            <img src="/static/tile-travel.svg" alt="">
-            <span class="tile-label"><span data-t="travel"></span><small id="tile-travel-sub"></small></span>
-          </button>
-        </div>
-        <div id="chosen" hidden>
-          <article class="card rise fn-events" id="event-card"></article>
-          <article class="card rise fn-weather" id="weather-card">
-            <h3 data-t="weather"></h3>
-            <div id="weather"></div>
-          </article>
-        </div>
-      </section>
+  <div id="live" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+  <div id="toast" class="toast" hidden></div>
 
-      <!-- Events panel: the events tile grows into this -->
-      <section id="events-view" class="panel fn-events" hidden>
-        <div class="panel-head">
-          <button class="back" type="button">← <span data-t="back"></span></button>
-          <h2 data-t="events"></h2>
-        </div>
-        <div class="filters">
-          <input id="search" type="search" data-tp="search">
-          <label><span data-t="from_date"></span> <input id="date" type="date"></label>
-        </div>
-        <p id="list-status" class="muted"></p>
-        <ul id="events"></ul>
-      </section>
+  <nav class="bottombar" aria-label="Navigasjon" data-ta="bb_nav">
+    <button id="bb-back" class="bb" type="button">
+      <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-back"/></svg>
+      <span class="bb-label" data-t="bb_back">Tilbake</span>
+    </button>
+    <a id="bb-home" class="bb" href="#/">
+      <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-home"/></svg>
+      <span class="bb-label" data-t="bb_home">Hjem</span>
+    </a>
+    <button id="bb-read" class="bb" type="button">
+      <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-speaker"/></svg>
+      <span class="bb-label">Les høyt</span>
+    </button>
+  </nav>
 
-      <!-- Travel panel: the travel tile grows into this -->
-      <section id="travel-view" class="panel fn-travel" hidden>
-        <div class="panel-head">
-          <button class="back" type="button">← <span data-t="back"></span></button>
-          <h2 data-t="travel"></h2>
-        </div>
-        <p id="travel-event"></p>
-        <p class="muted" data-t="from_where"></p>
-        <div id="origins" class="chips"></div>
-        <div class="place-search">
-          <input id="place" type="search" autocomplete="off" data-tp="place">
-          <ul id="place-hits" hidden></ul>
-        </div>
-        <div id="trips"></div>
-      </section>
-    </div>
+  <!-- Home header scene: hills, Mjøsa, forest. Colours come from body[data-tod]. -->
+  <template id="tpl-landscape">
+    <svg class="land" viewBox="0 0 400 150" preserveAspectRatio="xMidYMax slice" focusable="false">
+      <defs>
+        <linearGradient id="land-sky" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" style="stop-color: var(--sky-top)"/>
+          <stop offset="1" style="stop-color: var(--sky-bot)"/>
+        </linearGradient>
+      </defs>
+      <rect width="400" height="150" fill="url(#land-sky)"/>
+      <circle class="land-sun" cx="318" cy="52" r="17" style="fill: var(--sun)"/>
+      <path style="fill: var(--hill-far)" d="M0 92C50 74 100 78 150 88s110-24 170-14 60 8 80 4v72H0z"/>
+      <rect y="98" width="400" height="26" style="fill: var(--lake-c)"/>
+      <path class="shimmer" style="stroke: var(--lake-hi)" fill="none" stroke-width="2" stroke-linecap="round"
+            d="M150 106h34M206 112h46M282 105h22M190 118h28"/>
+      <path style="fill: var(--hill-mid)" d="M0 110c40-10 90-8 140 4v36H0zM268 116c36-12 90-14 132-8v42H268z"/>
+      <g style="fill: var(--tree)">
+        <path d="M8 112l7-22 7 22zM20 111l8-26 8 26zM34 110l6-18 6 18zM44 110l8-24 8 24zM58 110l6-17 6 17zM68 111l7-21 7 21zM82 112l6-16 6 16zM92 113l7-19 7 19zM106 114l5-13 5 13z"/>
+        <path d="M278 114l6-16 6 16zM290 112l7-21 7 21zM304 110l8-25 8 25zM318 109l6-18 6 18zM330 108l8-24 8 24zM344 108l6-17 6 17zM356 108l8-23 8 23zM370 108l6-16 6 16zM382 108l7-20 7 20z"/>
+      </g>
+      <path style="fill: var(--bg)" d="M0 134c70-14 150-8 220-2s130-6 180-4v22H0z"/>
+    </svg>
+  </template>
 
-    <!-- Talk: speech-first interface (talk.js). Four stacked sections, one colour per function:
-         voice (violet), events (amber), travel (blue), weather (cyan). Large type, few elements. -->
-    <div id="talk-view" class="talk" data-state="idle" hidden>
-      <section id="tsec-voice" class="tsec fn-voice" aria-labelledby="talk-title">
-        <h2 id="talk-title" class="tsec-h" tabindex="-1">
-          <svg viewBox="0 0 48 48" aria-hidden="true" focusable="false"><rect x="17" y="4" width="14" height="25" rx="7"/><path d="M10 22a14 14 0 0 0 28 0M24 36v8M16 44h16"/></svg>
-          <span data-tt="title_voice"></span>
-        </h2>
-        <div class="tsec-body">
-          <div id="talk-notice" class="talk-notice" role="dialog" aria-labelledby="talk-notice-text" hidden>
-            <p id="talk-notice-text" data-tt="notice"></p>
-            <div class="talk-row">
-              <button id="notice-ok" class="big-btn primary" type="button" data-tt="notice_ok"></button>
-              <button id="notice-type" class="big-btn" type="button" data-tt="notice_type"></button>
-            </div>
-          </div>
-          <div class="talk-ask">
-            <button id="mic" class="mic" type="button">
-              <svg viewBox="0 0 48 48" aria-hidden="true" focusable="false">
-                <rect x="17" y="4" width="14" height="25" rx="7"/><path d="M10 22a14 14 0 0 0 28 0M24 36v8M16 44h16"/>
-              </svg>
-              <span id="mic-label" class="mic-label"></span>
-            </button>
-            <form id="ask-form" class="ask-form">
-              <label for="ask" data-tt="type_label"></label>
-              <div class="talk-row">
-                <input id="ask" type="text" autocomplete="off" enterkeyhint="send" data-ttp="type_ph">
-                <button class="big-btn primary" type="submit" data-tt="send"></button>
-              </div>
-            </form>
-          </div>
-          <p id="no-speech" class="talk-hint" data-tt="no_speech" hidden></p>
-          <p id="talk-state" class="talk-state" role="status"></p>
-          <div class="talk-row talk-controls">
-            <button id="stop-speech" class="big-btn" type="button" disabled><span aria-hidden="true">&#9632;</span> <span data-tt="stop"></span></button>
-            <button id="mute" class="big-btn toggle" type="button" aria-pressed="true"><span data-tt="read_aloud"></span></button>
-          </div>
-          <div id="talk-heard" class="talk-heard"></div>
-          <p id="talk-say" class="talk-say" aria-live="polite"></p>
-          <div id="talk-examples" class="talk-examples">
-            <p data-tt="examples_head"></p>
-            <div id="talk-example-list" class="talk-row"></div>
-          </div>
-        </div>
-      </section>
+  <!-- Icon sprite: 24x24, stroke icons; colour from currentColor. -->
+  <svg class="sprite" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+    <symbol id="i-music" viewBox="0 0 24 24"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></symbol>
+    <symbol id="i-theatre" viewBox="0 0 24 24"><path d="M2 3h10v6.5a5 5 0 0 1-10 0z"/><path d="M5 7.5h.01M9 7.5h.01M5 11.5a2.5 2.5 0 0 0 4 0"/><path d="M14.5 9H22v6.5a5 5 0 0 1-9.2 2.7"/><path d="M16.5 13h.01M20 13h.01M16.3 17.3a2.4 2.4 0 0 1 3.4 0"/></symbol>
+    <symbol id="i-sport" viewBox="0 0 24 24"><circle cx="15" cy="4" r="2"/><path d="M13 7l-2 6M13 8l4 3M13 8l-4 1-2 3M11 13l3 3-1 5M11 13l-3 4H4"/></symbol>
+    <symbol id="i-learn" viewBox="0 0 24 24"><path d="M2 5c3-1.5 7-1.5 10 1 3-2.5 7-2.5 10-1v14c-3-1.5-7-1.5-10 1-3-2.5-7-2.5-10-1z"/><path d="M12 6v14"/></symbol>
+    <symbol id="i-market" viewBox="0 0 24 24"><path d="M3 10h18l-2 10H5z"/><path d="M8 10l4-6 4 6M9 14v3M15 14v3M12 14v3"/></symbol>
+    <symbol id="i-people" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20c0-3.5 2.7-6 6-6s6 2.5 6 6M15 14.5c3 0 6 2 6 5.5"/></symbol>
+    <symbol id="i-family" viewBox="0 0 24 24"><circle cx="8" cy="4.5" r="2.5"/><circle cx="17.5" cy="10" r="2"/><path d="M8 8v7l-2 6M8 15l2 6M4.5 10.5h7l4.5 3M17.5 12.5v3.5l-1.5 4.5M17.5 16l1.5 4.5"/></symbol>
+    <symbol id="i-surprise" viewBox="0 0 24 24"><rect x="3.5" y="10" width="17" height="11" rx="1.5"/><path d="M2.5 7h19v3h-19zM12 7v14M12 7C10 3 6 3 6 5.5 6 7 9 7 12 7zM12 7c2-4 6-4 6-1.5C18 7 15 7 12 7z"/></symbol>
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></symbol>
+    <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4M8 22h8"/></symbol>
+    <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 2.5-3 4.5M12 17.5h.01"/></symbol>
+    <symbol id="i-infinity" viewBox="0 0 24 24"><path d="M6 8a4 4 0 1 0 0 8c3 0 9-8 12-8a4 4 0 1 1 0 8c-3 0-9-8-12-8z"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></symbol>
+    <symbol id="i-calendar-plus" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4M12 12v6M9 15h6"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+    <symbol id="i-binoculars" viewBox="0 0 24 24"><circle cx="6.5" cy="16" r="4"/><circle cx="17.5" cy="16" r="4"/><path d="M10.5 16h3M3.5 13L6 5h3l1 8M20.5 13L18 5h-3l-1 8"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 22s7-6.5 7-12a7 7 0 0 0-14 0c0 5.5 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M4 12.5l5 5L20 6.5"/></symbol>
+    <symbol id="i-shuffle" viewBox="0 0 24 24"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></symbol>
+    <symbol id="i-ticket" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2a3 3 0 0 0 0 6v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2a3 3 0 0 0 0-6z"/><path d="M14 5v2M14 11v2M14 17v2"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 11v6M12 7.5h.01"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z"/></symbol>
+    <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M7 19h10.5a4.5 4.5 0 0 0 .6-8.96A6 6 0 0 0 6.6 11.1 4 4 0 0 0 7 19z"/></symbol>
+    <symbol id="i-partly" viewBox="0 0 24 24"><path d="M8 2.5V4M3 8H1.5M4.5 4.5l1 1M11.5 4.5l-1 1"/><path d="M4.6 10.8a3.5 3.5 0 0 1 6.2-3.3"/><path d="M9 21h8.5a3.5 3.5 0 0 0 .5-7A5 5 0 0 0 8.3 15 3 3 0 0 0 9 21z"/></symbol>
+    <symbol id="i-rain" viewBox="0 0 24 24"><path d="M7 14h10.5a4.5 4.5 0 0 0 .6-8.96A6 6 0 0 0 6.6 6.1 4 4 0 0 0 7 14z"/><path d="M8 17l-1 3.5M12 17l-1 3.5M16 17l-1 3.5"/></symbol>
+    <symbol id="i-snow" viewBox="0 0 24 24"><path d="M7 14h10.5a4.5 4.5 0 0 0 .6-8.96A6 6 0 0 0 6.6 6.1 4 4 0 0 0 7 14z"/><path d="M8 17.5h.01M12 19h.01M16 17.5h.01M10 22h.01M14 22h.01" stroke-width="3"/></symbol>
+    <symbol id="i-thunder" viewBox="0 0 24 24"><path d="M7 14h10.5a4.5 4.5 0 0 0 .6-8.96A6 6 0 0 0 6.6 6.1 4 4 0 0 0 7 14z"/><path d="M13 14l-3 4h4l-3 4"/></symbol>
+    <symbol id="i-fog" viewBox="0 0 24 24"><path d="M4 8h16M2.5 12h19M4 16h16M7 20h10"/></symbol>
+    <symbol id="i-walk" viewBox="0 0 24 24"><circle cx="13" cy="4" r="2"/><path d="M11 8l-2 6 3 2v5M11 8l3 3 3 1M9 14l-2 7M11 8l-4 2-1 3"/></symbol>
+    <symbol id="i-bus" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="15" rx="2.5"/><path d="M4 11h16M8 21v-3M16 21v-3M8 14.5h.01M16 14.5h.01"/></symbol>
+    <symbol id="i-train" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="14" rx="3"/><path d="M5 10h14M9 21l1.5-4M15 21l-1.5-4M9 13.5h.01M15 13.5h.01"/></symbol>
+    <symbol id="i-boat" viewBox="0 0 24 24"><path d="M3 16l2 4.5h14l2-4.5zM6 16v-5h12v5M12 11V4M9 7h6"/></symbol>
+    <symbol id="i-plane" viewBox="0 0 24 24"><path d="M10.5 3.5L12 2l1.5 1.5V9l8 5v2l-8-2.5V19l2.5 2v1L12 21l-4 1v-1l2.5-2v-5.5l-8 2.5v-2l8-5z"/></symbol>
+    <symbol id="i-flag" viewBox="0 0 24 24"><path d="M5 21V4M5 4h12l-2.5 4L17 12H5"/></symbol>
+    <symbol id="i-speaker" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16.5 9a4 4 0 0 1 0 6M19 6.5a7.5 7.5 0 0 1 0 11"/></symbol>
+    <symbol id="i-share" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></symbol>
+    <symbol id="i-external" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"/></symbol>
+    <symbol id="i-hourglass" viewBox="0 0 24 24"><path d="M6 2h12M6 22h12M7 2v3l5 7-5 7v3M17 2v3l-5 7 5 7v3"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 2l8 3v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V5z"/><path d="M9 12l2 2 4-4"/></symbol>
+    <symbol id="i-tap" viewBox="0 0 24 24"><path d="M9 11V4.5a1.5 1.5 0 0 1 3 0V10M12 9.5a1.5 1.5 0 0 1 3 0V11M15 10.5a1.5 1.5 0 0 1 3 0V15a7 7 0 0 1-7 7h-.5a6 6 0 0 1-5-2.7L3 15.5a1.5 1.5 0 0 1 2.5-1.7L9 17"/></symbol>
+    <symbol id="i-list" viewBox="0 0 24 24"><path d="M9 6h12M9 12h12M9 18h12M4 6h.01M4 12h.01M4 18h.01"/></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 21s-8-5-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 6-8 11-8 11z"/></symbol>
+    <symbol id="i-plug" viewBox="0 0 24 24"><path d="M9 2v5M15 2v5M6 7h12v4a6 6 0 0 1-12 0zM12 17v5"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="13" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></symbol>
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8M5 9.5V20h5v-6h4v6h5V9.5"/></symbol>
+    <symbol id="i-print" viewBox="0 0 24 24"><path d="M7 9V3h10v6M7 17H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/><rect x="7" y="14" width="10" height="7" rx="1"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="M19 12H5M11 5l-7 7 7 7"/></symbol>
+  </svg>
 
-      <section id="tsec-events" class="tsec fn-events" aria-labelledby="tsec-events-h">
-        <h2 id="tsec-events-h" class="tsec-h">
-          <svg viewBox="0 0 48 48" aria-hidden="true" focusable="false"><rect x="6" y="10" width="36" height="32" rx="4"/><path d="M6 20h36M16 5v10M32 5v10M15 29h6M27 29h6M15 35h6"/></svg>
-          <span data-tt="title_events"></span>
-        </h2>
-        <div class="tsec-body">
-          <p id="talk-ev-empty" class="tsec-empty" data-tt="events_empty"></p>
-          <div id="talk-confirm" class="talk-confirm" hidden></div>
-          <ol id="talk-cards" class="talk-cards"></ol>
-          <div id="talk-follow" class="talk-row talk-follow" hidden></div>
-        </div>
-      </section>
-
-      <section id="tsec-travel" class="tsec fn-travel" aria-labelledby="tsec-travel-h">
-        <h2 id="tsec-travel-h" class="tsec-h">
-          <svg viewBox="0 0 48 48" aria-hidden="true" focusable="false"><rect x="8" y="5" width="32" height="32" rx="6"/><path d="M8 22h32M14 43l4-6M34 43l-4-6"/><circle cx="16" cy="30" r="2.5"/><circle cx="32" cy="30" r="2.5"/></svg>
-          <span data-tt="title_travel"></span>
-        </h2>
-        <div id="talk-travel" class="tsec-body"></div>
-      </section>
-
-      <section id="tsec-weather" class="tsec fn-weather" aria-labelledby="tsec-weather-h">
-        <h2 id="tsec-weather-h" class="tsec-h">
-          <svg viewBox="0 0 48 48" aria-hidden="true" focusable="false"><circle cx="17" cy="17" r="7"/><path d="M17 3v4M3 17h4M7 7l3 3M27 7l-3 3"/><path d="M16 40h21a8 8 0 0 0 0-16 11 11 0 0 0-21 4 6 6 0 0 0 0 12z"/></svg>
-          <span data-tt="title_weather"></span>
-        </h2>
-        <div id="talk-weather" class="tsec-body"></div>
-      </section>
-    </div>
-
-    <!-- Connect an AI assistant (MCP): a quiet, separate page (#mcp). The snippet is filled in by app.js. -->
-    <section id="mcp-view" class="mcp" aria-labelledby="mcp-title" hidden>
-      <h2 id="mcp-title" class="mcp-h" tabindex="-1">
-        <svg viewBox="0 0 48 48" aria-hidden="true" focusable="false"><path d="M18 4v10M30 4v10M12 14h24v8a12 12 0 0 1-24 0zM24 34v10"/></svg>
-        <span data-t="mcp_title"></span>
-      </h2>
-      <p data-t="mcp_intro"></p>
-      <p data-t="mcp_how"></p>
-      <div class="mcp-code">
-        <pre id="mcp-snippet" tabindex="0"></pre>
-        <button id="mcp-copy" class="mcp-copy" type="button" data-t="mcp_copy"></button>
-        <p id="mcp-copied" class="mcp-copied" role="status"></p>
-      </div>
-      <p data-t="mcp_path"></p>
-      <h3 data-t="mcp_tools"></h3>
-      <ul class="mcp-tools">
-        <li><code>search_events</code>: <span data-t="mcp_t_search"></span></li>
-        <li><code>event_weather</code>: <span data-t="mcp_t_weather"></span></li>
-        <li><code>event_trips</code>: <span data-t="mcp_t_trips"></span></li>
-        <li><code>list_origins</code>: <span data-t="mcp_t_origins"></span></li>
-      </ul>
-      <p class="mcp-safe" data-t="mcp_readonly"></p>
-      <p><a href="#" class="mcp-back">← <span data-t="mcp_back"></span></a></p>
-    </section>
-  </main>
-
-  <footer class="muted">
-    <span data-t="sources"></span>
-    <a href="https://www.hamar.kommune.no/kulturkalender" target="_blank" rel="noopener">Hamar kommune</a> ·
-    <a href="https://entur.no" target="_blank" rel="noopener">Entur</a> ·
-    <a href="https://www.yr.no" target="_blank" rel="noopener">Yr / MET Norway</a>
-  </footer>
+  <script src="/static/i18n.js"></script>
+  <script src="/static/parser.js"></script>
   <script src="/static/app.js"></script>
-  <script src="/static/talk.js"></script>
 </body>
 </html>

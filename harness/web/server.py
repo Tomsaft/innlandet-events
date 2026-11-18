@@ -1,8 +1,8 @@
 """Demo web page: pick an event and a date, see how to get there and the weather.
 
-Stdlib http.server only. Reads the pipeline's output (out/events_deduped.json)
-and never writes files. Event descriptions are not sent to the browser,
-because they can name contact people (CLAUDE.md: no personal data).
+Stdlib http.server only. Reads the pipeline's output (out/events_matched.json,
+else events_deduped.json, else events.json) and never writes files. Event
+descriptions are not sent to the browser, because they can name contact people (CLAUDE.md: no personal data).
 """
 import hashlib
 import json
@@ -17,8 +17,11 @@ import yaml
 from harness.web.services import Entur, ServiceError, Yr
 
 STATIC = Path(__file__).parent / "static"
-EVENT_FILES = [Path("out/events_deduped.json"), Path("out/events.json")]
-FIXTURE = Path("fixtures/hamar_kommune.json")
+EVENT_FILES = [Path("out/events_matched.json"), Path("out/events_deduped.json"),
+               Path("out/events.json")]
+# Venue addresses come from the probe fixtures (one per source).
+FIXTURES = [Path("fixtures/hamar_kommune.json"), Path("fixtures/ticketmaster.json"),
+            Path("fixtures/kulturradar.json")]
 CONTENT_TYPES = {".html": "text/html", ".js": "text/javascript", ".css": "text/css",
                  ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg",
                  ".webp": "image/webp"}
@@ -35,9 +38,10 @@ def load_events() -> list[dict]:
         raise ServiceError("No events yet: run `python run.py all --offline --mock` first.")
     events = json.loads(path.read_text(encoding="utf-8"))
     addresses = {}
-    if FIXTURE.is_file():
-        for item in json.loads(FIXTURE.read_text(encoding="utf-8")):
-            addresses[item["url"]] = item.get("address", "")
+    for fixture in FIXTURES:
+        if fixture.is_file():
+            for item in json.loads(fixture.read_text(encoding="utf-8")):
+                addresses[item["url"]] = item.get("address", "")
 
     now = datetime.now(timezone.utc)
     out = []
@@ -58,6 +62,8 @@ def load_events() -> list[dict]:
             "cancelled": e.get("cancelled", False), "summary_en": e.get("summary_en", ""),
             "summary_no": e.get("summary_no", ""), "summary_de": e.get("summary_de", ""),
             "source_url": e["source_url"],
+            # Only source URLs (match stage), never names: safe to expose.
+            "also_listed_at": e.get("also_listed_at") or [e["source_url"]],
         })
     return sorted(out, key=lambda e: e["start"])
 
@@ -101,24 +107,48 @@ class App:
         return place
 
     @staticmethod
+    def same_tz(a: datetime, b: datetime) -> datetime:
+        """b in a's terms. If only one is naive, it takes the other's offset: both
+        are local Oslo times from the same listing (no tzdata on Windows)."""
+        if (a.tzinfo is None) == (b.tzinfo is None):
+            return b.astimezone(a.tzinfo) if a.tzinfo else b
+        return b.replace(tzinfo=a.tzinfo)
+
+    @staticmethod
     def when(e: dict, default_hour: int) -> tuple[datetime, datetime]:
         start = datetime.fromisoformat(e["start"])
-        end = datetime.fromisoformat(e["end"]) if e["end"] else start
+        end = App.same_tz(start, datetime.fromisoformat(e["end"])) if e["end"] else start
         if not e["time_known"]:
             start = start.replace(hour=default_hour)
             end = start
         return start, max(start, end)
 
-    def trips(self, eid: str, origin: dict) -> dict:
+    def trips(self, eid: str, origin: dict, direction: str = "out") -> dict:
+        """direction "out": origin -> venue, arriving before the start.
+        "return": venue -> origin, departing after the end. The end is guessed as
+        start + 2 h when it or the time is unknown, or when the event runs over
+        several days (then the return is planned on the first day)."""
+        if direction not in ("out", "return"):
+            raise ValueError(f"bad direction: {direction!r}")
         if not self.cfg["entur"]["enabled"]:
             raise ServiceError("Travel info is switched off (config/web.yaml).")
+        ent = self.cfg["entur"]
         e = self.event(eid)
         start, _ = self.when(e, 10)
-        arrive = start - timedelta(minutes=self.cfg["entur"]["arrive_minutes_before"])
         dest = self.venue_place(e)
-        patterns = self.entur.trips(origin, dest, arrive, self.cfg["entur"]["trips"])
-        return {"arrive_by": arrive.isoformat(), "time_guessed": not e["time_known"],
-                "venue": dest, "trips": patterns}
+        if direction == "out":
+            arrive = start - timedelta(minutes=ent["arrive_minutes_before"])
+            patterns = self.entur.trips(origin, dest, arrive, ent["trips"])
+            return {"direction": "out", "arrive_by": arrive.isoformat(),
+                    "time_guessed": not e["time_known"], "venue": dest, "trips": patterns}
+        end = self.same_tz(start, datetime.fromisoformat(e["end"])) if e["end"] else None
+        end_known = e["time_known"] and end is not None and end.date() == start.date()
+        if not end_known:
+            end = start + timedelta(hours=2)
+        depart = max(end, start) + timedelta(minutes=ent.get("return_minutes_after", 10))
+        patterns = self.entur.trips(dest, origin, depart, ent["trips"], arrive_by=False)
+        return {"direction": "return", "depart_after": depart.isoformat(),
+                "time_guessed": not end_known, "venue": dest, "trips": patterns}
 
     def weather(self, eid: str) -> dict:
         if not self.cfg["yr"]["enabled"]:
@@ -171,12 +201,12 @@ def make_handler(app: App):
                     if parts[3] == "trips":
                         origin = {"id": q.get("id", ""), "name": q.get("name", "Start"),
                                   "lat": float(q["lat"]), "lon": float(q["lon"])}
-                        return self.json(app.trips(parts[2], origin))
+                        return self.json(app.trips(parts[2], origin, q.get("dir", "out")))
                 self.json({"error": "not found"}, 404)
+            except (KeyError, ValueError):  # before LookupError: KeyError is one
+                self.json({"error": "bad request"}, 400)
             except LookupError:
                 self.json({"error": "unknown event"}, 404)
-            except (KeyError, ValueError):
-                self.json({"error": "bad request"}, 400)
             except ServiceError as e:
                 self.json({"error": str(e)}, 502)
 

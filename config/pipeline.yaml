@@ -8,3 +8,44 @@ budget:
   max_seconds: 900
 audience: everyone in Innlandet and visitors
 languages: [en, no]
+match:
+  # source_ids, most original first; the kept copy of a fuzzy duplicate comes
+  # from the earliest listed source. Empty = input order.
+  # Kulturradar is an aggregator (least original), so it comes last.
+  source_priority: [hamar_kommune, ticketmaster, kulturradar]
+  # Optional: venue name -> name it should compare as (case and æøå ignored).
+  # Town names, "kulturhus", "scene", "salen" are stripped anyway.
+  # Example: "Kirsten Flagstad-salen": "Hamar Kulturhus"
+  venue_aliases: {}
+kulturradar:
+  # kulturradar.no city pages (RSC payload; no /api/, /arrangor, /admin ever).
+  # One request at a time, >= 3 s apart (our floor; robots.txt sets no delay).
+  # --max-pages caps all requests (sitemap + city pages). City pages share one
+  # region-wide list, so the crawl stops at the first page with nothing new.
+  request_delay_seconds: 3
+  cities: [hamar, ringsaker, lillehammer, gjovik, gudbrandsdalen, osterdalen, valdres]
+ticketmaster:
+  # Official Discovery API v2 only (never scrape ticketmaster.no). Key from the
+  # TICKETMASTER_API_KEY env var, never stored. Limits: 5 req/s, 5000/day.
+  # Innlandet coverage: one geoPoint + radius query per town below; results are
+  # merged and de-duplicated by Ticketmaster event id. --max-pages caps pages
+  # per town.
+  # Keep only venues in Innlandet: by venue state.name (old county names
+  # accepted too), else by Innlandet postal code (harness/sources/ticketmaster.py).
+  require_state: Innlandet
+  state_aliases: [Hedmark, Oppland]
+  radius_km: 40
+  page_size: 50
+  request_delay_seconds: 0.25   # max 4 req/s
+  points:
+    - {name: Hamar, lat: 60.7945, lon: 11.0680}
+    - {name: Lillehammer, lat: 61.1153, lon: 10.4662}
+    - {name: Gjøvik, lat: 60.7957, lon: 10.6916}
+    - {name: Elverum, lat: 60.8819, lon: 11.5623}
+    - {name: Kongsvinger, lat: 60.1905, lon: 11.9977}
+    - {name: Otta, lat: 61.7726, lon: 9.5371}
+    - {name: Fagernes, lat: 60.9858, lon: 9.2323}
+    - {name: Tynset, lat: 62.2754, lon: 10.7774}
+    - {name: Trysil, lat: 61.3150, lon: 12.2638}
+    - {name: Lom, lat: 61.8378, lon: 8.5680}
+    - {name: Beitostølen, lat: 61.2465, lon: 8.9095}

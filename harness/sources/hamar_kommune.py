@@ -90,6 +90,21 @@ def parse_event_page(html: str, url: str, fetched_at: str | None = None) -> RawI
     )
 
 
+def crawler_session() -> requests.Session:
+    """Session with our User-Agent and CRAWLER_CONTACT; shared by the crawled sources."""
+    contact = os.environ.get("CRAWLER_CONTACT")
+    if not contact:
+        raise RuntimeError(
+            "Set CRAWLER_CONTACT (e.g. in PowerShell: "
+            '$env:CRAWLER_CONTACT="your.name@example.com") so the site can reach us.'
+        )
+    s = requests.Session()
+    s.headers["User-Agent"] = (
+        f"innlandet-events-student-project (KIUA2003, University of Inland Norway; contact: {contact})"
+    )
+    return s
+
+
 def pick_sample(urls: list[str], max_pages: int) -> list[str]:
     """Hand-picked pages first, then evenly spaced pages for variety."""
     must = [u for u in RAW_PICKS if u in urls]
@@ -110,17 +125,7 @@ class HamarKommuneSource(EventSource):
         self.max_pages = max_pages
 
     def _session(self) -> requests.Session:
-        contact = os.environ.get("CRAWLER_CONTACT")
-        if not contact:
-            raise RuntimeError(
-                "Set CRAWLER_CONTACT (e.g. in PowerShell: "
-                '$env:CRAWLER_CONTACT="your.name@example.com") so the site can reach us.'
-            )
-        s = requests.Session()
-        s.headers["User-Agent"] = (
-            f"innlandet-events-student-project (KIUA2003, University of Inland Norway; contact: {contact})"
-        )
-        return s
+        return crawler_session()
 
     def _get(self, session: requests.Session, url: str) -> str | None:
         resp = session.get(url, timeout=30)

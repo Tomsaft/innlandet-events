@@ -18,6 +18,8 @@ class RawItem:
     description: str = ""       # emails/phones redacted
     schedule: list[str] = field(default_factory=list)
     language: str = "no"
+    municipality: str = ""      # town/city if the source gives one; "" = Hamar default
+    original_url: str = ""      # the listing's own source/ticket link (aggregators); "" = none
 
 
 @dataclass
@@ -38,3 +40,4 @@ class Event:
     summary_no: str = ""
     summary_de: str = ""
     tags: list[str] = field(default_factory=list)
+    original_url: str = ""      # source/ticket link from an aggregator; used by match, not served

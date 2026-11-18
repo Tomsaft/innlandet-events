@@ -5,4 +5,4 @@ regions:
   innlandet:
     label: "Innlandet"
     includes: [hamar]     # add lillehammer, gjovik, ... here later
-    sources: []
+    sources: [ticketmaster, kulturradar]   # towns: ticketmaster.points / kulturradar.cities in pipeline.yaml

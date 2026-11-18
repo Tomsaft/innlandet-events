@@ -6,6 +6,7 @@ entur:
   # Entur requires an ET-Client-Name header: "<organisation>-<application>".
   client_name: "inn-innlandetevents"
   arrive_minutes_before: 10
+  return_minutes_after: 10    # return trips leave this long after the event ends
   trips: 3
 yr:
   enabled: true      # MET Norway Locationforecast; needs CRAWLER_CONTACT

@@ -39,7 +39,7 @@ INSTRUCTIONS = (
     "forecast at the venue and public transport there. list_origins gives the "
     "fixed starting points. Read-only.")
 EVENT_FIELDS = ["id", "title", "start", "end", "venue", "municipality", "category",
-                "summary", "cancelled", "source_url"]
+                "summary", "cancelled", "source_url", "also_listed_at"]
 
 TOOLS = [
     {
@@ -50,7 +50,8 @@ TOOLS = [
             "municipality and summary (case-insensitive). `date_from`/`date_to` "
             "(YYYY-MM-DD, inclusive) keep events that are running on any day in the "
             "range. Returns id, title, start, end, venue, municipality, category, "
-            "summary {en, no}, cancelled and source_url. Use the id with "
+            "summary {en, no}, cancelled, source_url and also_listed_at (every "
+            "source URL listing the same event). Use the id with "
             "event_weather and event_trips."),
         "inputSchema": {
             "type": "object",
@@ -87,8 +88,11 @@ TOOLS = [
     {
         "name": "event_trips",
         "description": (
-            "Public transport (Entur) to one event, arriving 10 minutes before it "
-            "starts. `origin` is the name of a configured starting point (see "
+            "Public transport (Entur) for one event. direction \"out\" (default): from "
+            "`origin` to the venue, arriving 10 minutes before the start. direction "
+            "\"return\": from the venue back to `origin`, leaving 10 minutes after the "
+            "end (end guessed as start + 2 h when unknown; then time_guessed is true). "
+            "`origin` is the name of a configured starting point (see "
             "list_origins; case-insensitive) or any stop/address in Norway, which is "
             "looked up with Entur's place search (first hit). Without `origin`, the "
             "first configured starting point is used."),
@@ -97,6 +101,8 @@ TOOLS = [
             "properties": {
                 "event_id": {"type": "string", "description": "Event id from search_events."},
                 "origin": {"type": "string", "description": "Starting point name or address."},
+                "direction": {"type": "string", "enum": ["out", "return"], "default": "out",
+                              "description": "\"out\" to the event, \"return\" back home."},
             },
             "required": ["event_id"],
             "additionalProperties": False,
@@ -226,7 +232,7 @@ class BevegTools:
         if not self.app.cfg["entur"]["enabled"]:
             raise ToolError("Travel info is switched off (web config).")
         origin = self.resolve_origin(args.get("origin"))
-        result = self.app.trips(args["event_id"], origin)
+        result = self.app.trips(args["event_id"], origin, args.get("direction", "out"))
         return {"origin": origin, **result}
 
     def list_origins(self, args: dict):

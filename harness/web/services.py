@@ -18,8 +18,8 @@ JOURNEY = "https://api.entur.io/journey-planner/v3/graphql"
 FORECAST = "https://api.met.no/weatherapi/locationforecast/2.0/compact"
 
 TRIP_QUERY = """
-query($from: Location!, $to: Location!, $dt: DateTime!, $n: Int!) {
-  trip(from: $from, to: $to, dateTime: $dt, arriveBy: true, numTripPatterns: $n) {
+query($from: Location!, $to: Location!, $dt: DateTime!, $n: Int!, $arriveBy: Boolean!) {
+  trip(from: $from, to: $to, dateTime: $dt, arriveBy: $arriveBy, numTripPatterns: $n) {
     tripPatterns {
       expectedStartTime expectedEndTime duration walkDistance
       legs {
@@ -59,7 +59,9 @@ class Entur:
                         "lat": lat, "lon": lon})
         return out
 
-    def trips(self, origin: dict, dest: dict, arrive_by: datetime, n: int) -> list[dict]:
+    def trips(self, origin: dict, dest: dict, when: datetime, n: int,
+              arrive_by: bool = True) -> list[dict]:
+        """Trips arriving by `when` (arrive_by=True) or departing after it (False)."""
         def location(p):
             loc = {"name": p["name"]}
             if str(p.get("id", "")).startswith("NSR:"):
@@ -69,7 +71,7 @@ class Entur:
             return loc
 
         variables = {"from": location(origin), "to": location(dest),
-                     "dt": arrive_by.isoformat(), "n": n}
+                     "dt": when.isoformat(), "n": n, "arriveBy": arrive_by}
         try:
             r = self.s.post(JOURNEY, timeout=20,
                             json={"query": TRIP_QUERY, "variables": variables})

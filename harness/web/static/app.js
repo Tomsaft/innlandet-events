@@ -1,5 +1,7 @@
-// InFoMo demo front end: pick an event (tile 1), see the weather, then plan the
-// trip (tile 2). Plain JS, no build step. Nothing the user picks is stored.
+// Beveg demo front end. A start screen offers two modes, routed by the URL hash:
+// #explore: pick an event (tile 1), see the weather, then plan the trip (tile 2);
+// #talk: speech-first mode in talk.js. No hash = the chooser.
+// Plain JS, no build step. Nothing the user picks is stored.
 
 const TEXT = {
   en: {
@@ -21,6 +23,23 @@ const TEXT = {
     travel_off: "Travel info unavailable", weather_off: "No forecast",
     wind: "wind", precip: "precip.", transfers: (n) => n === 0 ? "direct" : `${n} change${n > 1 ? "s" : ""}`,
     walk: "Walk", min: "min", plan_entur: "Open in Entur",
+    slogan_a: "See what's on.", slogan_b: "Get moving.", slogan: "See what's on. Get moving.",
+    choose: "How do you want to use Beveg?", switch_mode: "Switch mode",
+    mode_explore: "Explore", mode_explore_desc: "Browse events, travel and weather on screen.",
+    mode_talk: "Talk", mode_talk_desc: "Ask with your voice or type. Large text, few buttons.",
+    mcp_title: "Connect your AI assistant (MCP)",
+    mcp_intro: "You can also use Beveg from an AI assistant that supports MCP (Model Context Protocol), for example Claude Desktop. The assistant starts a small Beveg server on your own computer and can then look up events, weather and trips for you.",
+    mcp_how: "Paste these settings into the assistant's MCP configuration (in Claude Desktop: claude_desktop_config.json) and restart it.",
+    mcp_path: "Replace <path> with the folder where innlandet-events is. CRAWLER_CONTACT is needed for the weather (MET Norway asks for contact details).",
+    mcp_contact: "<contact>",
+    mcp_copy: "Copy", mcp_copied: "Copied.", mcp_selected: "Selected: press Ctrl+C (or ⌘+C) to copy.",
+    mcp_tools: "What the assistant can do",
+    mcp_t_search: "search upcoming events by text, date, category or place.",
+    mcp_t_weather: "the Yr (MET Norway) forecast at an event.",
+    mcp_t_trips: "public transport trips from Entur to an event.",
+    mcp_t_origins: "the fixed starting points you can travel from.",
+    mcp_readonly: "The server only reads: it changes nothing and stores nothing about you.",
+    mcp_back: "Back to the start",
   },
   no: {
     events: "Arrangementer", travel: "Reise", back: "Tilbake",
@@ -41,6 +60,23 @@ const TEXT = {
     travel_off: "Reiseinformasjon utilgjengelig", weather_off: "Ingen varsel",
     wind: "vind", precip: "nedbør", transfers: (n) => n === 0 ? "direkte" : `${n} bytte${n > 1 ? "r" : ""}`,
     walk: "Gå", min: "min", plan_entur: "Åpne i Entur",
+    slogan_a: "Se hva som skjer.", slogan_b: "Beveg deg dit.", slogan: "Se hva som skjer. Beveg deg dit.",
+    choose: "Hvordan vil du bruke Beveg?", switch_mode: "Bytt modus",
+    mode_explore: "Utforsk", mode_explore_desc: "Bla i arrangementer, reise og vær på skjermen.",
+    mode_talk: "Snakk", mode_talk_desc: "Spør med stemmen eller skriv. Stor tekst, få knapper.",
+    mcp_title: "Koble til din AI-assistent (MCP)",
+    mcp_intro: "Du kan også bruke Beveg fra en AI-assistent som støtter MCP (Model Context Protocol), for eksempel Claude Desktop. Assistenten starter en liten Beveg-server på din egen maskin og kan da slå opp arrangementer, vær og reiser for deg.",
+    mcp_how: "Lim inn innstillingene under i assistentens MCP-oppsett (i Claude Desktop: claude_desktop_config.json), og start den på nytt.",
+    mcp_path: "Bytt <path> med mappen der innlandet-events ligger. CRAWLER_CONTACT trengs for værvarselet (MET Norway ber om kontaktinfo).",
+    mcp_contact: "<din kontaktinfo>",
+    mcp_copy: "Kopier", mcp_copied: "Kopiert.", mcp_selected: "Markert: trykk Ctrl+C (eller ⌘+C) for å kopiere.",
+    mcp_tools: "Dette kan assistenten gjøre",
+    mcp_t_search: "søk i kommende arrangementer etter tekst, dato, kategori eller sted.",
+    mcp_t_weather: "værvarselet fra Yr (MET Norway) ved et arrangement.",
+    mcp_t_trips: "reiser med kollektivtransport fra Entur til et arrangement.",
+    mcp_t_origins: "de faste startstedene du kan reise fra.",
+    mcp_readonly: "Serveren bare leser: den endrer ingenting og lagrer ingenting om deg.",
+    mcp_back: "Tilbake til start",
   },
   de: {
     events: "Veranstal\u00ADtungen", travel: "Anreise", back: "Zurück",
@@ -61,6 +97,23 @@ const TEXT = {
     travel_off: "Reiseinformationen nicht verfügbar", weather_off: "Keine Vorhersage",
     wind: "Wind", precip: "Niederschl.", transfers: (n) => n === 0 ? "direkt" : `${n} Umstieg${n > 1 ? "e" : ""}`,
     walk: "Fußweg", min: "Min.", plan_entur: "In Entur öffnen",
+    slogan_a: "Sieh, was los ist.", slogan_b: "Komm hin.", slogan: "Sieh, was los ist. Komm hin.",
+    choose: "Wie möchten Sie Beveg nutzen?", switch_mode: "Modus wechseln",
+    mode_explore: "Entdecken", mode_explore_desc: "Veranstaltungen, Anreise und Wetter am Bildschirm durchsehen.",
+    mode_talk: "Sprechen", mode_talk_desc: "Mit der Stimme fragen oder tippen. Große Schrift, wenige Knöpfe.",
+    mcp_title: "KI-Assistenten verbinden (MCP)",
+    mcp_intro: "Sie können Beveg auch über einen KI-Assistenten nutzen, der MCP (Model Context Protocol) unterstützt, zum Beispiel Claude Desktop. Der Assistent startet einen kleinen Beveg-Server auf Ihrem eigenen Rechner und kann dann Veranstaltungen, Wetter und Verbindungen für Sie nachschlagen.",
+    mcp_how: "Fügen Sie diese Einstellungen in die MCP-Konfiguration des Assistenten ein (bei Claude Desktop: claude_desktop_config.json) und starten Sie ihn neu.",
+    mcp_path: "Ersetzen Sie <path> durch den Ordner, in dem innlandet-events liegt. CRAWLER_CONTACT wird für das Wetter gebraucht (MET Norway verlangt Kontaktangaben).",
+    mcp_contact: "<Ihre Kontaktangabe>",
+    mcp_copy: "Kopieren", mcp_copied: "Kopiert.", mcp_selected: "Markiert: Drücken Sie Strg+C (oder ⌘+C) zum Kopieren.",
+    mcp_tools: "Was der Assistent kann",
+    mcp_t_search: "kommende Veranstaltungen nach Text, Datum, Kategorie oder Ort suchen.",
+    mcp_t_weather: "die Vorhersage von Yr (MET Norway) am Veranstaltungsort.",
+    mcp_t_trips: "ÖPNV-Verbindungen von Entur zu einer Veranstaltung.",
+    mcp_t_origins: "die festen Startpunkte für die Anreise.",
+    mcp_readonly: "Der Server liest nur: Er ändert nichts und speichert nichts über Sie.",
+    mcp_back: "Zurück zum Start",
   },
 };
 const LANGS = { no: { html: "nb", locale: "nb-NO" }, en: { html: "en", locale: "en-GB" }, de: { html: "de", locale: "de-DE" } };
@@ -77,6 +130,8 @@ const CATEGORY = {
 
 let lang = "no", events = [], config = null, selected = null, origin = null;
 let view = "home", lastWeather = null, lastTrips = null, skyOverride = null;
+let mode = null; // "chooser" | "explore" | "talk", from the URL hash
+let dataReady = null; // Promise for [config, events]; talk.js waits on it
 const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const $ = (id) => document.getElementById(id);
 const t = (k) => TEXT[lang][k];
@@ -152,6 +207,9 @@ function applyLang() {
   document.querySelectorAll("[data-tp]").forEach((el) => (el.placeholder = t(el.dataset.tp)));
   document.querySelectorAll("#lang [data-lang]").forEach((b) =>
     b.setAttribute("aria-pressed", String(b.dataset.lang === lang)));
+  setTitle();
+  renderMcp();
+  if (typeof Talk !== "undefined") Talk.applyLang();
   if (!config) return;
   renderTiles();
   renderList();
@@ -283,7 +341,8 @@ function skyKind(sym) {
 }
 
 function setSky(sym, mm = 0) {
-  const kind = skyOverride || skyKind(sym);
+  // Only explore shows the event's weather; chooser and talk keep the calm default.
+  const kind = mode === "explore" ? skyOverride || skyKind(sym) : "none";
   document.body.dataset.sky = kind;
   // More drops for "heavy..." symbols or a lot of precipitation, fewer for "light...".
   const amount = skyOverride ? 1 : sym?.startsWith("heavy") || mm > 3 ? 1.8 : sym?.startsWith("light") ? 0.55 : 1;
@@ -426,6 +485,82 @@ function renderTrips(res) {
   }), h("p", {}, h("a", { href: "https://entur.no/", target: "_blank", rel: "noopener" }, t("plan_entur") + " ↗")));
 }
 
+// ---------- modes: chooser <-> explore <-> talk, routed by the URL hash ----------
+// The hash is "#<mode>" optionally followed by "&key=value" deep-link params, e.g.
+// "#explore&e=<id>&sky=rain". Old links with only params ("#e=...") open explore.
+
+function parseHash() {
+  const parts = location.hash.slice(1).split("&").filter(Boolean);
+  const params = new URLSearchParams(parts.filter((p) => p.includes("=")).join("&"));
+  let m = parts.find((p) => !p.includes("="));
+  if (m !== "explore" && m !== "talk" && m !== "mcp")
+    m = params.has("e") || params.has("o") || params.has("sky") ? "explore" : "chooser";
+  return { mode: m, params };
+}
+
+function setTitle() {
+  const name = { explore: "mode_explore", talk: "mode_talk", mcp: "mcp_title" }[mode];
+  document.title = name ? `Beveg · ${t(name)}` : "Beveg";
+}
+
+function route(focus = true) {
+  const next = parseHash().mode;
+  if (next === mode) return;
+  const prev = mode;
+  mode = next;
+  $("chooser-view").hidden = mode !== "chooser";
+  $("explore-view").hidden = mode !== "explore";
+  $("talk-view").hidden = mode !== "talk";
+  $("mcp-view").hidden = mode !== "mcp";
+  $("mode-switch").hidden = mode === "chooser";
+  document.body.dataset.mode = mode;
+  if (prev === "talk") Talk.leave();
+  // The weather sky belongs to explore; the other screens get the calm default.
+  if (mode === "explore" && lastWeather?.available) setSky(lastWeather.at_start.symbol, lastWeather.at_start.precip);
+  else setSky(null);
+  if (mode === "talk") Talk.enter();
+  setTitle();
+  window.scrollTo(0, 0);
+  // Move focus into the new screen for keyboard and screen-reader users (not on first load).
+  if (focus) {
+    const target = mode === "chooser" ? $("chooser-title") : mode === "talk" ? $("talk-title")
+      : mode === "mcp" ? $("mcp-title") : view === "home" ? $("tile-events") : null;
+    target?.focus({ preventScroll: true });
+  }
+}
+
+// ---------- MCP panel (#mcp): config snippet for an AI assistant ----------
+// The path placeholder stays "<path>" in every language (the text below the snippet
+// refers to it); only the contact placeholder is translated.
+
+function renderMcp() {
+  const path = "<path>";
+  const cfg = { mcpServers: { beveg: {
+    command: `${path}\\.venv\\Scripts\\python.exe`,
+    args: [`${path}\\run.py`, "mcp"],
+    env: { CRAWLER_CONTACT: t("mcp_contact") },
+  } } };
+  $("mcp-snippet").textContent = JSON.stringify(cfg, null, 2);
+  $("mcp-copied").textContent = "";
+}
+
+async function copyMcp() {
+  const pre = $("mcp-snippet");
+  try {
+    await navigator.clipboard.writeText(pre.textContent);
+    $("mcp-copied").textContent = t("mcp_copied");
+  } catch {
+    // No clipboard access (e.g. not a secure context): select the text instead.
+    const range = document.createRange();
+    range.selectNodeContents(pre);
+    const sel = getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+    pre.focus();
+    $("mcp-copied").textContent = t("mcp_selected");
+  }
+}
+
 // ---------- start ----------
 
 async function init() {
@@ -439,28 +574,37 @@ async function init() {
   $("tile-events").addEventListener("click", () => show("events"));
   $("tile-travel").addEventListener("click", openTravel);
   document.querySelectorAll(".back").forEach((b) => b.addEventListener("click", () => show("home")));
-  document.addEventListener("keydown", (ev) => { if (ev.key === "Escape" && view !== "home") show("home"); });
+  document.addEventListener("keydown", (ev) => { if (ev.key === "Escape" && mode === "explore" && view !== "home") show("home"); });
   $("search").addEventListener("input", renderList);
   $("date").addEventListener("input", renderList);
   $("place").addEventListener("input", onPlaceInput);
+  $("mcp-copy").addEventListener("click", copyMcp);
   document.addEventListener("click", (ev) => {
     if (!ev.target.closest(".place-search")) $("place-hits").hidden = true;
   });
-  // Deep link for the demo: #e=<event id>&o=<fixed origin id>&sky=<rain|snow|clear|...>
-  const link = new URLSearchParams(location.hash.slice(1));
+  // Deep link for the demo: #explore&e=<event id>&o=<fixed origin id>&sky=<rain|snow|clear|...>
+  const link = parseHash().params;
   skyOverride = link.get("sky");
+  addEventListener("hashchange", () => route());
+  addEventListener("popstate", () => route());
+  Talk.init();
+  route(false);
   applyLang();
   if (skyOverride) setSky(null);
   $("tile-events-sub").textContent = t("loading");
+  dataReady = Promise.all([api("/api/config"), api("/api/events")]);
   try {
-    [config, events] = await Promise.all([api("/api/config"), api("/api/events")]);
+    [config, events] = await dataReady;
     $("date").value = new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Oslo" });
     applyLang();
     if (link.get("e")) selectEvent(link.get("e"));
+    Talk.dataLoaded();
     const o = config.origins.find((x) => x.id === link.get("o"));
     if (selected && o) { origin = o; renderTiles(); openTravel(); }
   } catch (err) {
     $("tile-events-sub").textContent = err.message;
+    Talk.dataLoaded(err);
   }
 }
-init();
+// Run after talk.js (the next script) has loaded.
+addEventListener("DOMContentLoaded", init);

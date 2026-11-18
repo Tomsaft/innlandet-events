@@ -112,9 +112,9 @@ CRAWLER_CONTACT="your.name@example.com" python run.py probe --max-pages 30
 30 pages take about 3 minutes. `python run.py probe --offline` re-reads the
 committed fixtures without any network access.
 
-## Demo web page: InFoMo (events + travel + weather)
+## Demo web page: Beveg (events + travel + weather)
 
-*InFoMo: Info først. FOMO aldri.* A small local web page on top of the
+*Beveg: Se hva som skjer. Beveg deg dit.* A small local web page on top of the
 pipeline output: open the events tile and choose an event and a date, see the
 weather at the venue (Yr / MET Norway) as the page's sky, then open the travel
 tile to see how to get there by public transport (Entur). Run the pipeline first so `out/` exists.
@@ -140,6 +140,35 @@ python run.py serve                                # http://127.0.0.1:8000
 - Animations are turned off for users who ask their system for reduced motion.
 - Descriptions are not sent to the browser (they can name contact people);
   the user's starting point is not logged or stored.
+
+## MCP server (Beveg for AI assistants)
+
+`python run.py mcp` starts a read-only MCP (Model Context Protocol) server on
+stdio, so assistants such as Claude Desktop can use Beveg. It reuses the demo
+page's code and returns the same data as its API. Tools:
+
+- `search_events`: upcoming events, filtered by `query`, `date_from`/`date_to`
+  (YYYY-MM-DD), `category` and `limit` (default 10, max 50)
+- `event_weather`: the Yr forecast at an event's venue (needs `CRAWLER_CONTACT`)
+- `event_trips`: Entur trips to an event from a configured starting point
+  (by name) or any stop/address; defaults to the first starting point
+- `list_origins`: the configured starting points
+
+Claude Desktop config (`claude_desktop_config.json`):
+
+```json
+{"mcpServers": {"beveg": {
+  "command": "<path>\\.venv\\Scripts\\python.exe",
+  "args": ["<path>\\run.py", "mcp"],
+  "env": {"CRAWLER_CONTACT": "<contact>"}}}}
+```
+
+`<path>` is the folder of this repo (JSON needs each `\` doubled). Use full
+paths: the client may start the server from any folder. The server then
+runs from the repo folder, so `out/` is found, and a relative `--web-config`
+(default `config/web.yaml`) is read from the repo folder too. The server
+writes no files, makes no LLM calls, logs only to stderr (method and tool
+names, never arguments) and never returns descriptions or person fields.
 
 ## Command reference
 

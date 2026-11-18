@@ -76,6 +76,23 @@ def cmd_serve(args):
     serve(args.web_config, args.host, args.port)
 
 
+def cmd_mcp(args):
+    """Read-only MCP server on stdio for AI assistants. No LLM calls, writes nothing.
+
+    stdout carries only protocol messages, so nothing here may print to it.
+    Runs from the project folder so out/ and fixtures/ are found whatever the
+    client's working directory is (Claude Desktop may not set one). A relative
+    --web-config is therefore taken relative to the project folder too.
+    """
+    from harness.mcp_server import run
+    repo = Path(__file__).resolve().parent
+    config = Path(args.web_config)
+    if not config.is_absolute():
+        config = repo / config
+    os.chdir(repo)
+    run(str(config))
+
+
 # One check per implemented stage, in pipeline order.
 CHECKS = ["eval/check_probe.py", "eval/check_enrich.py", "eval/check_dedupe.py"]
 
@@ -103,7 +120,7 @@ def cmd_all(args):
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument("command", choices=["probe", "enrich", "dedupe", "all", "serve"])
+    p.add_argument("command", choices=["probe", "enrich", "dedupe", "all", "serve", "mcp"])
     p.add_argument("--max-pages", type=int, default=30)
     p.add_argument("--offline", action="store_true")
     p.add_argument("--mock", action="store_true")
@@ -114,7 +131,7 @@ def main():
     p.add_argument("--port", type=int, default=8000)
     args = p.parse_args()
     {"probe": cmd_probe, "enrich": cmd_enrich, "dedupe": cmd_dedupe, "all": cmd_all,
-     "serve": cmd_serve}[args.command](args)
+     "serve": cmd_serve, "mcp": cmd_mcp}[args.command](args)
 
 
 if __name__ == "__main__":

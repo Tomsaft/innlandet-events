@@ -9,15 +9,16 @@ from harness.models import CATEGORIES, Event, RawItem
 CANCELLED = re.compile(r"\b(avlyst|avlyses|cancelled|canceled)\b", re.I)
 
 SYSTEM = f"""You help people in Innlandet, Norway, and visitors find local events (Norwegian and English).
-You get one event as text. Reply with ONLY a JSON object with exactly these three keys:
+You get one event as text. Reply with ONLY a JSON object with exactly these four keys:
 - "category": one of {CATEGORIES}
 - "summary_en": ONE English sentence, max 25 words
 - "summary_no": the same sentence in Norwegian (bokmål), max 25 words
+- "summary_de": the same sentence in German, max 25 words
 Rules: use only facts from the text. Do not invent dates, times, prices or names.
 Do not copy the description. Do not include URLs.
 Do not include phone numbers or email addresses.
 Example reply:
-{{"category": "concert", "summary_en": "A live concert at the venue.", "summary_no": "En konsert på stedet."}}"""
+{{"category": "concert", "summary_en": "A live concert at the venue.", "summary_no": "En konsert på stedet.", "summary_de": "Ein Live-Konzert am Veranstaltungsort."}}"""
 
 def build_messages(item: RawItem) -> list[dict]:
     user = (
@@ -38,7 +39,7 @@ def parse_reply(text: str) -> dict:
         raise ValueError("JSON is not an object")
     if d.get("category") not in CATEGORIES:
         raise ValueError(f"bad category: {d.get('category')!r}")
-    for k in ("summary_en", "summary_no"):
+    for k in ("summary_en", "summary_no", "summary_de"):
         if not isinstance(d.get(k), str) or not d[k].strip():
             raise ValueError(f"missing {k}")
         if len(d[k].split()) > 45:
@@ -91,6 +92,7 @@ def enrich(items, client, model, temperature, budget, limit=None, now=None):
             cancelled=bool(CANCELLED.search(item.title)),
             category=reply["category"], summary_en=reply["summary_en"].strip(),
             summary_no=reply["summary_no"].strip(),
+            summary_de=reply["summary_de"].strip(),
         ))
     if budget.stop_reason is None:
         budget.stop("all_items_done")

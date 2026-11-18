@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="nb">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Beveg</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body data-sky="none">
+  <!-- Weather backdrop: driven by the forecast at the chosen event. -->
+  <div id="sky" aria-hidden="true">
+    <div class="stars"></div>
+    <div class="sun"></div>
+    <div class="clouds">
+      <i style="--t:6%;  --w:260px; --d:70s; --dl:-10s"></i>
+      <i style="--t:18%; --w:180px; --d:55s; --dl:-40s"></i>
+      <i style="--t:30%; --w:320px; --d:90s; --dl:-25s"></i>
+      <i style="--t:48%; --w:220px; --d:65s; --dl:-55s"></i>
+      <i style="--t:62%; --w:280px; --d:80s; --dl:-5s"></i>
+      <i style="--t:76%; --w:200px; --d:60s; --dl:-30s"></i>
+    </div>
+    <div class="fog"></div>
+  </div>
+  <canvas id="precip" aria-hidden="true"></canvas>
+  <div id="flash" aria-hidden="true"></div>
+
+  <header>
+    <a id="mode-switch" class="mode-switch" href="#" hidden><span aria-hidden="true">&#8644;</span> <span data-t="switch_mode">Bytt modus</span></a>
+    <div class="brand">
+      <h1 aria-label="Beveg"><span aria-hidden="true">Beve<span class="g">g</span></span></h1>
+      <p class="slogan"><span class="sr-only" data-t="slogan">Se hva som skjer. Beveg deg dit.</span><span aria-hidden="true"><span class="s1" data-t="slogan_a">Se hva som skjer.</span> <span class="s2" data-t="slogan_b">Beveg deg dit.</span></span></p>
+    </div>
+    <div id="lang" class="lang-switch" role="group" aria-label="Språk / Language / Sprache">
+      <button type="button" data-lang="no" lang="nb" aria-label="Norsk" aria-pressed="true">NO</button>
+      <button type="button" data-lang="en" lang="en" aria-label="English" aria-pressed="false">EN</button>
+      <button type="button" data-lang="de" lang="de" aria-label="Deutsch" aria-pressed="false">DE</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- Start screen: choose how to use the page. No hash = this view; #explore / #talk. -->
+    <section id="chooser-view" hidden>
+      <h2 id="chooser-title" class="chooser-title" tabindex="-1" data-t="choose"></h2>
+      <div class="modes">
+        <a class="mode-card explore" href="#explore">
+          <svg class="mode-icon" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+            <rect x="5" y="5" width="16" height="16" rx="4"/><rect x="27" y="5" width="16" height="16" rx="4"/>
+            <rect x="5" y="27" width="16" height="16" rx="4"/><circle cx="35" cy="35" r="7"/><path d="M40 40l5 5"/>
+          </svg>
+          <span class="mode-name" data-t="mode_explore"></span>
+          <span class="mode-desc" data-t="mode_explore_desc"></span>
+        </a>
+        <a class="mode-card talk fn-voice" href="#talk">
+          <svg class="mode-icon" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+            <rect x="17" y="4" width="14" height="25" rx="7"/><path d="M10 22a14 14 0 0 0 28 0M24 36v8M16 44h16"/>
+          </svg>
+          <span class="mode-name" data-t="mode_talk"></span>
+          <span class="mode-desc" data-t="mode_talk_desc"></span>
+        </a>
+      </div>
+      <a class="mcp-link" href="#mcp">
+        <svg viewBox="0 0 48 48" aria-hidden="true" focusable="false"><path d="M18 4v10M30 4v10M12 14h24v8a12 12 0 0 1-24 0zM24 34v10"/></svg>
+        <span data-t="mcp_title"></span>
+      </a>
+    </section>
+
+    <!-- Explore: the interactive interface (tiles, panels, weather sky) -->
+    <div id="explore-view" hidden>
+      <!-- Home: two picture tiles, then the chosen event and its weather -->
+      <section id="home-view">
+        <div class="tiles">
+          <button id="tile-events" class="tile fn-events" type="button">
+            <img src="/static/tile-events.svg" alt="">
+            <span class="tile-label"><span data-t="events"></span><small id="tile-events-sub"></small></span>
+          </button>
+          <button id="tile-travel" class="tile fn-travel" type="button" disabled>
+            <img src="/static/tile-travel.svg" alt="">
+            <span class="tile-label"><span data-t="travel"></span><small id="tile-travel-sub"></small></span>
+          </button>
+        </div>
+        <div id="chosen" hidden>
+          <article class="card rise fn-events" id="event-card"></article>
+          <article class="card rise fn-weather" id="weather-card">
+            <h3 data-t="weather"></h3>
+            <div id="weather"></div>
+          </article>
+        </div>
+      </section>
+
+      <!-- Events panel: the events tile grows into this -->
+      <section id="events-view" class="panel fn-events" hidden>
+        <div class="panel-head">
+          <button class="back" type="button">← <span data-t="back"></span></button>
+          <h2 data-t="events"></h2>
+        </div>
+        <div class="filters">
+          <input id="search" type="search" data-tp="search">
+          <label><span data-t="from_date"></span> <input id="date" type="date"></label>
+        </div>
+        <p id="list-status" class="muted"></p>
+        <ul id="events"></ul>
+      </section>
+
+      <!-- Travel panel: the travel tile grows into this -->
+      <section id="travel-view" class="panel fn-travel" hidden>
+        <div class="panel-head">
+          <button class="back" type="button">← <span data-t="back"></span></button>
+          <h2 data-t="travel"></h2>
+        </div>
+        <p id="travel-event"></p>
+        <p class="muted" data-t="from_where"></p>
+        <div id="origins" class="chips"></div>
+        <div class="place-search">
+          <input id="place" type="search" autocomplete="off" data-tp="place">
+          <ul id="place-hits" hidden></ul>
+        </div>
+        <div id="trips"></div>
+      </section>
+    </div>
+
+    <!-- Talk: speech-first interface (talk.js). Four stacked sections, one colour per function:
+         voice (violet), events (amber), travel (blue), weather (cyan). Large type, few elements. -->
+    <div id="talk-view" class="talk" data-state="idle" hidden>
+      <section id="tsec-voice" class="tsec fn-voice" aria-labelledby="talk-title">
+        <h2 id="talk-title" class="tsec-h" tabindex="-1">
+          <svg viewBox="0 0 48 48" aria-hidden="true" focusable="false"><rect x="17" y="4" width="14" height="25" rx="7"/><path d="M10 22a14 14 0 0 0 28 0M24 36v8M16 44h16"/></svg>
+          <span data-tt="title_voice"></span>
+        </h2>
+        <div class="tsec-body">
+          <div id="talk-notice" class="talk-notice" role="dialog" aria-labelledby="talk-notice-text" hidden>
+            <p id="talk-notice-text" data-tt="notice"></p>
+            <div class="talk-row">
+              <button id="notice-ok" class="big-btn primary" type="button" data-tt="notice_ok"></button>
+              <button id="notice-type" class="big-btn" type="button" data-tt="notice_type"></button>
+            </div>
+          </div>
+          <div class="talk-ask">
+            <button id="mic" class="mic" type="button">
+              <svg viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+                <rect x="17" y="4" width="14" height="25" rx="7"/><path d="M10 22a14 14 0 0 0 28 0M24 36v8M16 44h16"/>
+              </svg>
+              <span id="mic-label" class="mic-label"></span>
+            </button>
+            <form id="ask-form" class="ask-form">
+              <label for="ask" data-tt="type_label"></label>
+              <div class="talk-row">
+                <input id="ask" type="text" autocomplete="off" enterkeyhint="send" data-ttp="type_ph">
+                <button class="big-btn primary" type="submit" data-tt="send"></button>
+              </div>
+            </form>
+          </div>
+          <p id="no-speech" class="talk-hint" data-tt="no_speech" hidden></p>
+          <p id="talk-state" class="talk-state" role="status"></p>
+          <div class="talk-row talk-controls">
+            <button id="stop-speech" class="big-btn" type="button" disabled><span aria-hidden="true">&#9632;</span> <span data-tt="stop"></span></button>
+            <button id="mute" class="big-btn toggle" type="button" aria-pressed="true"><span data-tt="read_aloud"></span></button>
+          </div>
+          <div id="talk-heard" class="talk-heard"></div>
+          <p id="talk-say" class="talk-say" aria-live="polite"></p>
+          <div id="talk-examples" class="talk-examples">
+            <p data-tt="examples_head"></p>
+            <div id="talk-example-list" class="talk-row"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="tsec-events" class="tsec fn-events" aria-labelledby="tsec-events-h">
+        <h2 id="tsec-events-h" class="tsec-h">
+          <svg viewBox="0 0 48 48" aria-hidden="true" focusable="false"><rect x="6" y="10" width="36" height="32" rx="4"/><path d="M6 20h36M16 5v10M32 5v10M15 29h6M27 29h6M15 35h6"/></svg>
+          <span data-tt="title_events"></span>
+        </h2>
+        <div class="tsec-body">
+          <p id="talk-ev-empty" class="tsec-empty" data-tt="events_empty"></p>
+          <div id="talk-confirm" class="talk-confirm" hidden></div>
+          <ol id="talk-cards" class="talk-cards"></ol>
+          <div id="talk-follow" class="talk-row talk-follow" hidden></div>
+        </div>
+      </section>
+
+      <section id="tsec-travel" class="tsec fn-travel" aria-labelledby="tsec-travel-h">
+        <h2 id="tsec-travel-h" class="tsec-h">
+          <svg viewBox="0 0 48 48" aria-hidden="true" focusable="false"><rect x="8" y="5" width="32" height="32" rx="6"/><path d="M8 22h32M14 43l4-6M34 43l-4-6"/><circle cx="16" cy="30" r="2.5"/><circle cx="32" cy="30" r="2.5"/></svg>
+          <span data-tt="title_travel"></span>
+        </h2>
+        <div id="talk-travel" class="tsec-body"></div>
+      </section>
+
+      <section id="tsec-weather" class="tsec fn-weather" aria-labelledby="tsec-weather-h">
+        <h2 id="tsec-weather-h" class="tsec-h">
+          <svg viewBox="0 0 48 48" aria-hidden="true" focusable="false"><circle cx="17" cy="17" r="7"/><path d="M17 3v4M3 17h4M7 7l3 3M27 7l-3 3"/><path d="M16 40h21a8 8 0 0 0 0-16 11 11 0 0 0-21 4 6 6 0 0 0 0 12z"/></svg>
+          <span data-tt="title_weather"></span>
+        </h2>
+        <div id="talk-weather" class="tsec-body"></div>
+      </section>
+    </div>
+
+    <!-- Connect an AI assistant (MCP): a quiet, separate page (#mcp). The snippet is filled in by app.js. -->
+    <section id="mcp-view" class="mcp" aria-labelledby="mcp-title" hidden>
+      <h2 id="mcp-title" class="mcp-h" tabindex="-1">
+        <svg viewBox="0 0 48 48" aria-hidden="true" focusable="false"><path d="M18 4v10M30 4v10M12 14h24v8a12 12 0 0 1-24 0zM24 34v10"/></svg>
+        <span data-t="mcp_title"></span>
+      </h2>
+      <p data-t="mcp_intro"></p>
+      <p data-t="mcp_how"></p>
+      <div class="mcp-code">
+        <pre id="mcp-snippet" tabindex="0"></pre>
+        <button id="mcp-copy" class="mcp-copy" type="button" data-t="mcp_copy"></button>
+        <p id="mcp-copied" class="mcp-copied" role="status"></p>
+      </div>
+      <p data-t="mcp_path"></p>
+      <h3 data-t="mcp_tools"></h3>
+      <ul class="mcp-tools">
+        <li><code>search_events</code>: <span data-t="mcp_t_search"></span></li>
+        <li><code>event_weather</code>: <span data-t="mcp_t_weather"></span></li>
+        <li><code>event_trips</code>: <span data-t="mcp_t_trips"></span></li>
+        <li><code>list_origins</code>: <span data-t="mcp_t_origins"></span></li>
+      </ul>
+      <p class="mcp-safe" data-t="mcp_readonly"></p>
+      <p><a href="#" class="mcp-back">← <span data-t="mcp_back"></span></a></p>
+    </section>
+  </main>
+
+  <footer class="muted">
+    <span data-t="sources"></span>
+    <a href="https://www.hamar.kommune.no/kulturkalender" target="_blank" rel="noopener">Hamar kommune</a> ·
+    <a href="https://entur.no" target="_blank" rel="noopener">Entur</a> ·
+    <a href="https://www.yr.no" target="_blank" rel="noopener">Yr / MET Norway</a>
+  </footer>
+  <script src="/static/app.js"></script>
+  <script src="/static/talk.js"></script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+# Settings for the demo web page (`python run.py serve`).
+# Each outside service can be switched off; events are still shown, marked
+# "travel info unavailable" / "no forecast" (docs/plan.md).
+entur:
+  enabled: true
+  # Entur requires an ET-Client-Name header: "<organisation>-<application>".
+  client_name: "inn-innlandetevents"
+  arrive_minutes_before: 10
+  trips: 3
+yr:
+  enabled: true      # MET Norway Locationforecast; needs CRAWLER_CONTACT
+
+# Fixed starting points offered as one-click buttons (docs/plan.md, Travel).
+# Users can also search for any stop or address; nothing they pick is stored.
+origins:
+  - {id: "NSR:StopPlace:60045", name: "Hamar stasjon", lat: 60.791525, lon: 11.077097}
+  - {id: "campus-hamar", name: "Universitetet i Innlandet, Hamar", lat: 60.796329, lon: 11.074287}
+  - {id: "NSR:StopPlace:59872", name: "Oslo S", lat: 59.910357, lon: 10.753051}
+  - {id: "NSR:StopPlace:58211", name: "Oslo lufthavn", lat: 60.193361, lon: 11.097887}
+
+# Where the geocoder searches first, and where to fall back if a venue
+# cannot be found (the page then says the location is approximate).
+focus: {lat: 60.7945, lon: 11.0680}
+
+# Manual fixes for venues the geocoder gets wrong: "venue text": [lat, lon]
+venues: {}

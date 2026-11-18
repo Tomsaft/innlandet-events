@@ -36,4 +36,5 @@ class Event:
     cancelled: bool = False
     summary_en: str = ""
     summary_no: str = ""
+    summary_de: str = ""
     tags: list[str] = field(default_factory=list)
